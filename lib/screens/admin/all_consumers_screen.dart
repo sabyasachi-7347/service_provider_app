@@ -1,5 +1,6 @@
 // lib/screens/admin/all_consumers_screen.dart
 import 'package:flutter/material.dart';
+import '../admin/user_details_screen.dart';
 
 class Consumer {
   final String id;
@@ -89,6 +90,15 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
     });
   }
 
+void _showConsumerDetails(BuildContext context, Consumer consumer) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UserDetailsScreen(consumerId: consumer.id, name: consumer.name),
+      ),
+    );
+  }
+
   Widget _buildFilter(String label, String? selectedValue, List<String> options,
       void Function(String?) onChanged) {
     return DropdownButtonFormField<String>(
@@ -150,7 +160,10 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
                       title: Text('${consumer.name} (${consumer.id})'),
                       subtitle: Text('${consumer.mobile}\n${consumer.fullAddress}'),
                       isThreeLine: true,
+                      onTap: () => _showConsumerDetails(context, consumer),
+                      trailing: Icon(Icons.arrow_forward_ios, size: 16),
                     ),
+                    
                   );
                 },
               ),
