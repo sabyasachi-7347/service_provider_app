@@ -1,4 +1,5 @@
 // lib/screens/admin/user_details_screen.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -34,10 +35,229 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     _nameController.text = widget.name;
   }
 
-  Future<void> _pickBillFile() async {
-    final picker = ImagePicker();
-    await picker.pickImage(source: ImageSource.camera); // or ImageSource.gallery
-    // Save/display the file
+  Future<void> _pickBillFile({int? assetIndex}) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      
+      if (pickedFile != null) {
+        // Make sure we have a valid file path
+        final String filePath = pickedFile.path;
+        final file = File(filePath);
+        
+        // Check if file exists
+        if (!file.existsSync()) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Error: File not found at selected location"),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+        
+        if (assetIndex != null) {
+          setState(() {
+            assets[assetIndex]['billImage'] = filePath;
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Bill uploaded successfully"),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print("Error picking file: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error selecting file: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  
+  void _captureImage({int? assetIndex}) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.camera,
+        preferredCameraDevice: CameraDevice.rear,
+        maxHeight: 1800,
+        maxWidth: 1800,
+        imageQuality: 90,
+      );
+      
+      if (pickedFile != null) {
+        // Make sure we have a valid file path
+        final String filePath = pickedFile.path;
+        final file = File(filePath);
+        
+        // Check if file exists
+        if (!file.existsSync()) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Error: File not found after capture"),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+        
+        if (assetIndex != null) {
+          setState(() {
+            assets[assetIndex]['billImage'] = filePath;
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Bill captured successfully"),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print("Error capturing image: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error capturing image: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  
+  void _viewUploadedFile(String filePath) {
+    try {
+      print("Attempting to view file: $filePath");
+      
+      if (filePath.isEmpty) {
+        print("Error: Empty file path provided");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: Empty file path provided"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      final file = File(filePath);
+      if (!file.existsSync()) {
+        print("File not found at path: $filePath");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("File not found: The attachment may have been moved or deleted."),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      // Check if file has content
+      if (file.lengthSync() <= 0) {
+        print("File exists but is empty: $filePath");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: The file is empty"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      print("Opening file preview dialog");
+      showDialog(
+        context: context,
+        builder: (_) => Dialog(
+          insetPadding: EdgeInsets.all(16),
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppBar(
+                  title: Text("Uploaded Document"),
+                  automaticallyImplyLeading: false,
+                  actions: [
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: Center(
+                    child: InteractiveViewer(
+                      panEnabled: true,
+                      boundaryMargin: EdgeInsets.all(20),
+                      minScale: 0.5,
+                      maxScale: 3.0,
+                      child: Image.file(
+                        file,
+                        fit: BoxFit.contain,
+                        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                          if (frame == null) {
+                            return Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                child,
+                                CircularProgressIndicator(),
+                              ],
+                            );
+                          }
+                          return child;
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          print("Error loading image in viewer: $error");
+                          print("Stack trace: $stackTrace");
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.broken_image, size: 64, color: Colors.red),
+                              SizedBox(height: 16),
+                              Text("Could not load image",
+                                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                              SizedBox(height: 8),
+                              Text("File may be corrupted or in an unsupported format",
+                                  textAlign: TextAlign.center),
+                              SizedBox(height: 16),
+                              Text("Path: $filePath",
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                  textAlign: TextAlign.center),
+                              SizedBox(height: 16),
+                              Text("Error: ${error.toString()}",
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                  textAlign: TextAlign.center),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (e, stackTrace) {
+      print("Error displaying file: $e");
+      print("Stack trace: $stackTrace");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error displaying file: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _addAsset() {
@@ -171,39 +391,235 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   children: [
                     ElevatedButton.icon(
                       onPressed: () async {
-                        final picker = ImagePicker();
-                        final pickedFile = await picker.pickImage(source: ImageSource.camera);
-                        if (pickedFile != null) {
-                          setState(() {
-                            billImagePath = pickedFile.path;
-                          });
+                        try {
+                          final picker = ImagePicker();
+                          final pickedFile = await picker.pickImage(
+                            source: ImageSource.camera,
+                            preferredCameraDevice: CameraDevice.rear,
+                            maxHeight: 1800,
+                            maxWidth: 1800,
+                            imageQuality: 90,
+                          );
+                          
+                          if (pickedFile != null) {
+                            final String filePath = pickedFile.path;
+                            final file = File(filePath);
+                            
+                            if (!file.existsSync()) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Error: File not found after capture"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+                            
+                            setState(() {
+                              billImagePath = filePath;
+                            });
+                          }
+                        } catch (e) {
+                          print("Error capturing image: $e");
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Error capturing image: ${e.toString()}"),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         }
                       },
                       icon: Icon(Icons.camera_alt),
                       label: Text("Camera"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade700,
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                     ElevatedButton.icon(
                       onPressed: () async {
-                        final picker = ImagePicker();
-                        final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-                        if (pickedFile != null) {
+                        try {
+                          print("Starting gallery picker");
+                          final picker = ImagePicker();
+                          
+                          // Pick image with less restrictive settings
+                          final XFile? pickedFile = await picker.pickImage(
+                            source: ImageSource.gallery,
+                            // Remove height/width/quality restrictions that might cause issues
+                          );
+                          
+                          print("Picked file result: $pickedFile");
+                          
+                          if (pickedFile == null) {
+                            print("No file was picked (user cancelled)");
+                            return;
+                          }
+                          
+                          // Get file path and check it
+                          final String filePath = pickedFile.path;
+                          print("File path from picker: $filePath");
+                          
+                          // Check file path is not empty
+                          if (filePath.isEmpty) {
+                            print("Error: Empty file path received from picker");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error: Invalid file path from gallery"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+                          
+                          // Create File object and check if exists
+                          final file = File(filePath);
+                          final bool fileExists = file.existsSync();
+                          print("File exists check: $fileExists");
+                          
+                          if (!fileExists) {
+                            print("File does not exist at path: $filePath");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error: File not found at selected location"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+                          
+                          // Check file size
+                          try {
+                            final fileSize = await file.length();
+                            print("File size: $fileSize bytes");
+                            
+                            if (fileSize <= 0) {
+                              print("File exists but has zero size");
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Error: Selected file is empty"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+                          } catch (sizeError) {
+                            print("Error checking file size: $sizeError");
+                          }
+                          
+                          // If we got here, the file should be valid
+                          print("Setting image path: $filePath");
                           setState(() {
-                            billImagePath = pickedFile.path;
+                            billImagePath = filePath;
                           });
+                          
+                          print("File selected successfully");
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Image selected successfully"),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } catch (e, stackTrace) {
+                          // More detailed error logging
+                          print("Error picking file: $e");
+                          print("Stack trace: $stackTrace");
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Error selecting file: ${e.toString()}"),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         }
                       },
                       icon: Icon(Icons.file_upload),
                       label: Text("Upload"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade700,
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                   ],
                 ),
                 
-                // Show upload status
+                // Show upload status and preview
                 billImagePath != null
                     ? Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Text("Bill uploaded successfully!", 
-                            style: TextStyle(color: Colors.green)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Bill uploaded successfully!", 
+                                style: TextStyle(color: Colors.green)),
+                            SizedBox(height: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: ListTile(
+                                leading: Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: Stack(
+                                      children: [
+                                        // Placeholder in case image fails to load
+                                        Container(
+                                          height: 80,
+                                          width: 80,
+                                          color: Colors.grey[200],
+                                          child: Center(
+                                            child: Icon(Icons.image, color: Colors.grey[400]),
+                                          ),
+                                        ),
+                                        // Actual image
+                                        Image.file(
+                                          File(billImagePath!),
+                                          height: 80,
+                                          width: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            print("Error loading image in add dialog: $error");
+                                            print("Error stack trace: $stackTrace");
+                                            return Center(
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(Icons.broken_image, color: Colors.red, size: 20),
+                                                  SizedBox(height: 4),
+                                                  Text(
+                                                    "Error loading",
+                                                    style: TextStyle(fontSize: 10, color: Colors.red),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                title: Text("Bill Attachment"),
+                                subtitle: Text(billImagePath!.split('/').last),
+                                trailing: IconButton(
+                                  icon: Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () {
+                                    setState(() {
+                                      billImagePath = null;
+                                    });
+                                  },
+                                ),
+                                onTap: () => _viewUploadedFile(billImagePath!),
+                              ),
+                            )
+                          ],
+                        ),
                       )
                     : SizedBox.shrink(),
               ],
@@ -529,29 +945,148 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
       decoration: InputDecoration(labelText: label),
     );
   }
+  
+  void _confirmSaveUserDetails() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text("Confirm Update"),
+        content: Text("Are you sure you want to update the details for ${widget.name}?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _saveUserDetails();
+            },
+            child: Text("Update"),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _saveUserDetails() async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+    
+    try {
+      // Create a map of the updated user data
+      final Map<String, dynamic> userData = {
+        'id': widget.consumerId,
+        'name': _nameController.text,
+        'address': {
+          'flatNo': _flatController.text,
+          'sector': _sectorController.text,
+          'floor': _floorController.text,
+          'landmark': _landmarkController.text,
+          'area': _areaController.text,
+          'plot': _plotController.text,
+          'city': _cityController.text,
+          'buildingName': _buildingController.text,
+          'pincode': _pincodeController.text,
+        },
+        'assets': assets,
+        'familyMembers': familyMembers,
+        'vehicles': vehicles,
+      };
+      
+      // Here you would typically call your API or service to update the data
+      // For demonstration, we're simulating an API call
+      await Future.delayed(Duration(seconds: 1));
+      
+      // Close loading dialog
+      Navigator.pop(context);
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("User details updated successfully"),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      
+      // Optional: Navigate back after saving
+      // Navigator.pop(context);
+    } catch (e) {
+      // Close loading dialog
+      Navigator.pop(context);
+      
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to update user details: ${e.toString()}"),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("User Details")),
+      appBar: AppBar(
+        title: Text("User Details"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.save),
+            tooltip: 'Save Changes',
+            onPressed: _confirmSaveUserDetails,
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("Consumer ID: ${widget.consumerId}", style: TextStyle(fontWeight: FontWeight.bold)),
-            _buildTextField("Name", _nameController),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: "Name",
+                suffixIcon: Icon(Icons.edit, size: 18),
+                helperText: "Tap to edit user name"
+              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             Divider(),
             Text("Address", style: TextStyle(fontWeight: FontWeight.bold)),
-            _buildTextField("Flat No", _flatController),
-            _buildTextField("Sector No", _sectorController),
-            _buildTextField("Floor", _floorController),
-            _buildTextField("Landmark", _landmarkController),
-            _buildTextField("Area", _areaController),
-            _buildTextField("Plot", _plotController),
-            _buildTextField("City", _cityController),
-            _buildTextField("Building Name", _buildingController),
-            _buildTextField("Pincode", _pincodeController),
+            Card(
+              elevation: 1,
+              margin: EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: Colors.grey.shade300),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  children: [
+                    _buildTextField("Flat No", _flatController),
+                    _buildTextField("Sector No", _sectorController),
+                    _buildTextField("Floor", _floorController),
+                    _buildTextField("Landmark", _landmarkController),
+                    _buildTextField("Area", _areaController),
+                    _buildTextField("Plot", _plotController),
+                    _buildTextField("City", _cityController),
+                    _buildTextField("Building Name", _buildingController),
+                    _buildTextField("Pincode", _pincodeController),
+                  ],
+                ),
+              ),
+            ),
 
             SizedBox(height: 20),
             ExpansionTile(
@@ -586,21 +1121,119 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                             Text("Service Due: ${asset['serviceDueDate']}"),
                             Text("Location: ${asset['location']}"),
                             SizedBox(height: 8),
+                            
+                            // Bill attachment preview (if exists)
+                            if (asset['billImage'] != null)
+                              Container(
+                                margin: EdgeInsets.only(bottom: 8),
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 50,
+                                      height: 50,                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: Stack(
+                                      children: [
+                                        // Placeholder in case image fails to load
+                                        Container(
+                                          height: 80,
+                                          width: 80,
+                                          color: Colors.grey[200],
+                                          child: Center(
+                                            child: Icon(Icons.image, color: Colors.grey[400]),
+                                          ),
+                                        ),
+                                        // Actual image
+                                        Image.file(
+                                          File(asset['billImage']),
+                                          height: 80,
+                                          width: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            print("Error loading image in asset list: $error");
+                                            return Center(
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(Icons.broken_image, color: Colors.red, size: 20),
+                                                  SizedBox(height: 4),
+                                                  Text(
+                                                    "Error",
+                                                    style: TextStyle(fontSize: 10, color: Colors.red),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text("Bill Attachment", style: TextStyle(fontWeight: FontWeight.bold)),
+                                          Text(asset['billImage'].split('/').last, 
+                                              style: TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 asset['billImage'] != null
-                                    ? TextButton.icon(
-                                        icon: Icon(Icons.receipt),
-                                        label: Text("View Bill"),
-                                        onPressed: () {
-                                          // Show bill image
-                                        },
+                                    ? Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          TextButton.icon(
+                                            icon: Icon(Icons.receipt),
+                                            label: Text("View Bill"),
+                                            onPressed: () {
+                                              _viewUploadedFile(asset['billImage']);
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: Icon(Icons.delete, color: Colors.red),
+                                            tooltip: "Remove attachment",
+                                            onPressed: () {
+                                              setState(() {
+                                                asset['billImage'] = null;
+                                              });
+                                            },
+                                          ),
+                                        ],
                                       )
-                                    : TextButton.icon(
-                                        icon: Icon(Icons.upload_file),
-                                        label: Text("Upload Bill"),
-                                        onPressed: _pickBillFile,
+                                    : Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          TextButton.icon(
+                                            icon: Icon(Icons.camera_alt),
+                                            label: Text("Capture"),
+                                            onPressed: () => _captureImage(assetIndex: assets.indexOf(asset)),
+                                          ),
+                                          TextButton.icon(
+                                            icon: Icon(Icons.upload_file),
+                                            label: Text("Upload"),
+                                            onPressed: () => _pickBillFile(assetIndex: assets.indexOf(asset)),
+                                          ),
+                                        ],
                                       ),
                               ],
                             ),
