@@ -10,11 +10,11 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
     signingConfigs {
-        release {
-            storeFile file("my-release-key.jks")
-            storePassword "pass@123"
-            keyAlias "my-key-alias"
-            keyPassword "your-key-password"
+        create("release") {
+            storeFile = file("my-release-key.jks")
+            storePassword = "pass@123"
+            keyAlias = "my-key-alias"
+            keyPassword = "your-key-password"
         }
     }
     compileOptions {
@@ -39,10 +39,10 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
-            minifyEnabled false
-            shrinkResources false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            isShrinkResources = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
         }

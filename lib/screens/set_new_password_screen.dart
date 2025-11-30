@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'login_screen.dart';
 
 class SetNewPasswordScreen extends StatefulWidget {
+  const SetNewPasswordScreen({super.key});
+
   @override
   State<SetNewPasswordScreen> createState() => _SetNewPasswordScreenState();
 }

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class OtpDialog extends StatefulWidget {
   final VoidCallback onVerified;
 
-  OtpDialog({required this.onVerified});
+  const OtpDialog({super.key, required this.onVerified});
 
   @override
   _OtpDialogState createState() => _OtpDialogState();

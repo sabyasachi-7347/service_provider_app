@@ -59,6 +59,8 @@ class AllServiceProvidersScreen extends StatelessWidget {
     // Add more dummy service providers here
   ];
 
+AllServiceProvidersScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,8 +77,8 @@ class AllServiceProvidersScreen extends StatelessWidget {
               margin: EdgeInsets.only(bottom: 12),
               child: ListTile(
                 leading: CircleAvatar(
-                  child: Text(sp.name[0]),
                   backgroundColor: Colors.blueAccent,
+                  child: Text(sp.name[0]),
                 ),
                 title: Text('${sp.name} (${sp.id})'),
                 subtitle: Column(

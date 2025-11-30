@@ -1,0 +1,31 @@
+{
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "serviceproviderapp01"
+        }
+      },
+      "android": {
+        "default": {
+          "projectId": "serviceproviderapp01",
+          "appId": "1:000000000000:android:0000000000000000000000",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "serviceproviderapp01",
+          "appId": "1:000000000000:ios:0000000000000000000000",
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "web": {
+        "default": {
+          "projectId": "serviceproviderapp01",
+          "appId": "1:000000000000:web:0000000000000000000000"
+        }
+      }
+    }
+  }
+}

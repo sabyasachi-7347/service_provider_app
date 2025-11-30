@@ -1,6 +1,6 @@
 // lib/screens/admin/all_complaints_requests_screen.dart
 import 'package:flutter/material.dart';
-import "../admin/user_details_screen.dart";
+// import "../admin/user_details_screen.dart";
 class ComplaintRequest {
   final String id;
   final String consumerName;
@@ -51,6 +51,8 @@ class AllComplaintsRequestsScreen extends StatelessWidget {
       status: 'Closed',
     ),
   ];
+
+  AllComplaintsRequestsScreen({super.key});
 
   Color getStatusColor(String status) {
     switch (status) {

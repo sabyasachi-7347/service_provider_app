@@ -7,7 +7,7 @@ class UserDetailsScreen extends StatefulWidget {
   final String consumerId;
   final String name;
 
-  const UserDetailsScreen({required this.consumerId, required this.name});
+  const UserDetailsScreen({super.key, required this.consumerId, required this.name});
 
   @override
   _UserDetailsScreenState createState() => _UserDetailsScreenState();
@@ -275,7 +275,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     DateTime serviceDueDate = DateTime.now().add(Duration(days: 90));
     
     // Function to select date
-    Future<DateTime?> _selectDate(BuildContext context, DateTime initialDate) async {
+    Future<DateTime?> selectDate(BuildContext context, DateTime initialDate) async {
       final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: initialDate,
@@ -293,7 +293,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
       builder: (_) => AlertDialog(
         title: Text("Add New Asset"),
         content: SingleChildScrollView(
-          child: Container(
+          child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.8,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -323,7 +323,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   subtitle: Text("${warrantyStartDate.toLocal()}".split(' ')[0]),
                   trailing: Icon(Icons.calendar_today),
                   onTap: () async {
-                    final DateTime? picked = await _selectDate(context, warrantyStartDate);
+                    final DateTime? picked = await selectDate(context, warrantyStartDate);
                     if (picked != null && picked != warrantyStartDate) {
                       setState(() {
                         warrantyStartDate = picked;
@@ -338,7 +338,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   subtitle: Text("${warrantyEndDate.toLocal()}".split(' ')[0]),
                   trailing: Icon(Icons.calendar_today),
                   onTap: () async {
-                    final DateTime? picked = await _selectDate(context, warrantyEndDate);
+                    final DateTime? picked = await selectDate(context, warrantyEndDate);
                     if (picked != null && picked != warrantyEndDate) {
                       setState(() {
                         warrantyEndDate = picked;
@@ -353,7 +353,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   subtitle: Text("${lastServiceDate.toLocal()}".split(' ')[0]),
                   trailing: Icon(Icons.calendar_today),
                   onTap: () async {
-                    final DateTime? picked = await _selectDate(context, lastServiceDate);
+                    final DateTime? picked = await selectDate(context, lastServiceDate);
                     if (picked != null && picked != lastServiceDate) {
                       setState(() {
                         lastServiceDate = picked;
@@ -368,7 +368,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   subtitle: Text("${serviceDueDate.toLocal()}".split(' ')[0]),
                   trailing: Icon(Icons.calendar_today),
                   onTap: () async {
-                    final DateTime? picked = await _selectDate(context, serviceDueDate);
+                    final DateTime? picked = await selectDate(context, serviceDueDate);
                     if (picked != null && picked != serviceDueDate) {
                       setState(() {
                         serviceDueDate = picked;
@@ -671,7 +671,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     DateTime insuranceExpiryDate = DateTime.now().add(Duration(days: 365)); // Default 1 year from now
     
     // Function to select date
-    Future<DateTime?> _selectDate(BuildContext context, DateTime initialDate) async {
+    Future<DateTime?> selectDate(BuildContext context, DateTime initialDate) async {
       final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: initialDate,
@@ -702,7 +702,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           return AlertDialog(
             title: Text("Add Family Member"),
             content: SingleChildScrollView(
-              child: Container(
+              child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.8,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -725,7 +725,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       subtitle: Text("${dateOfBirth.toLocal()}".split(' ')[0]),
                       trailing: Icon(Icons.calendar_today),
                       onTap: () async {
-                        final DateTime? picked = await _selectDate(context, dateOfBirth);
+                        final DateTime? picked = await selectDate(context, dateOfBirth);
                         if (picked != null && picked != dateOfBirth) {
                           setStateDialog(() {
                             dateOfBirth = picked;
@@ -755,7 +755,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       subtitle: Text("${insuranceExpiryDate.toLocal()}".split(' ')[0]),
                       trailing: Icon(Icons.calendar_today),
                       onTap: () async {
-                        final DateTime? picked = await _selectDate(context, insuranceExpiryDate);
+                        final DateTime? picked = await selectDate(context, insuranceExpiryDate);
                         if (picked != null && picked != insuranceExpiryDate) {
                           setStateDialog(() {
                             insuranceExpiryDate = picked;
@@ -811,7 +811,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     DateTime pucExpiryDate = DateTime.now().add(Duration(days: 180));
     
     // Function to select date
-    Future<DateTime?> _selectDate(BuildContext context, DateTime initialDate) async {
+    Future<DateTime?> selectDate(BuildContext context, DateTime initialDate) async {
       final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: initialDate,
@@ -828,7 +828,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           return AlertDialog(
             title: Text("Add Vehicle"),
             content: SingleChildScrollView(
-              child: Container(
+              child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.8,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -858,7 +858,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       subtitle: Text("${insuranceExpiryDate.toLocal()}".split(' ')[0]),
                       trailing: Icon(Icons.calendar_today),
                       onTap: () async {
-                        final DateTime? picked = await _selectDate(context, insuranceExpiryDate);
+                        final DateTime? picked = await selectDate(context, insuranceExpiryDate);
                         if (picked != null && picked != insuranceExpiryDate) {
                           setStateDialog(() {
                             insuranceExpiryDate = picked;
@@ -882,7 +882,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       subtitle: Text("${pucExpiryDate.toLocal()}".split(' ')[0]),
                       trailing: Icon(Icons.calendar_today),
                       onTap: () async {
-                        final DateTime? picked = await _selectDate(context, pucExpiryDate);
+                        final DateTime? picked = await selectDate(context, pucExpiryDate);
                         if (picked != null && picked != pucExpiryDate) {
                           setStateDialog(() {
                             pucExpiryDate = picked;

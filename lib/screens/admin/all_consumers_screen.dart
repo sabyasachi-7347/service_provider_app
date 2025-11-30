@@ -28,6 +28,8 @@ class Consumer {
 }
 
 class AllConsumersScreen extends StatefulWidget {
+  const AllConsumersScreen({super.key});
+
   @override
   _AllConsumersScreenState createState() => _AllConsumersScreenState();
 }

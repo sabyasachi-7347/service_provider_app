@@ -4,6 +4,8 @@ import '../widgets/otp_dialog.dart';
 import 'set_new_password_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
+
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }

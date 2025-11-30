@@ -6,6 +6,8 @@ import 'dashboard/admin_dashboard.dart';
 import 'dashboard/service_provider_dashboard.dart'; // Placeholder for demo
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }

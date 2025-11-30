@@ -7,6 +7,8 @@ import '../admin/all_service_providers_screen.dart';
 import '../admin/all_complaints_requests_screen.dart';
 
 class AdminDashboard extends StatelessWidget {
+  const AdminDashboard({super.key});
+
   void _logout(BuildContext context) {
     Navigator.pushAndRemoveUntil(
       context,

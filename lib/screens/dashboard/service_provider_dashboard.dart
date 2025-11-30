@@ -4,6 +4,8 @@ import '../login_screen.dart';
 import '../../utils/theme_provider.dart';
 
 class ServiceProviderDashboard extends StatelessWidget {
+  const ServiceProviderDashboard({super.key});
+
   void _logout(BuildContext context) {
     Navigator.pushAndRemoveUntil(
       context,
