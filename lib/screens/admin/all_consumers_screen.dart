@@ -83,6 +83,15 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
     }).toList();
   }
 
+  int get _activeFilterCount {
+    int count = 0;
+    if (selectedCity != null) count++;
+    if (selectedSector != null) count++;
+    if (selectedHouseType != null) count++;
+    if (selectedBuilding != null) count++;
+    return count;
+  }
+
   void _clearFilters() {
     setState(() {
       selectedCity = null;
@@ -92,28 +101,155 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
     });
   }
 
-void _showConsumerDetails(BuildContext context, Consumer consumer) {
+  void _showConsumerDetails(BuildContext context, Consumer consumer) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => UserDetailsScreen(consumerId: consumer.id, name: consumer.name),
+        builder: (_) =>
+            UserDetailsScreen(consumerId: consumer.id, name: consumer.name),
       ),
     );
   }
 
-  Widget _buildFilter(String label, String? selectedValue, List<String> options,
-      void Function(String?) onChanged) {
+  Widget _buildFilter(
+    String label,
+    String? selectedValue,
+    List<String> options,
+    void Function(String?) onChanged,
+  ) {
     return DropdownButtonFormField<String>(
       value: selectedValue,
-      decoration: InputDecoration(labelText: label),
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
       items: [
-        DropdownMenuItem(value: null, child: Text('All')),
-        ...options.map((value) => DropdownMenuItem(
-              value: value,
-              child: Text(value),
-            )),
+        const DropdownMenuItem<String>(
+          value: null,
+          child: Text('All'),
+        ),
+        ...options.map(
+          (value) => DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          ),
+        ),
       ],
       onChanged: onChanged,
+    );
+  }
+
+  Widget _buildConsumerCard(Consumer consumer) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      elevation: 1.5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _showConsumerDetails(context, consumer),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: const Color(0xFFDBEAFE),
+                    child: Text(
+                      consumer.name[0],
+                      style: const TextStyle(
+                        color: Color(0xFF1D4ED8),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          consumer.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'ID: ${consumer.id}',
+                          style: const TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, color: Color(0xFF9CA3AF)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(Icons.call_outlined, size: 16, color: Color(0xFF4B5563)),
+                  const SizedBox(width: 6),
+                  Text(
+                    consumer.mobile,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF374151),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      consumer.houseType,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: Color(0xFF374151),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF4B5563)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      consumer.fullAddress,
+                      style: const TextStyle(
+                        color: Color(0xFF4B5563),
+                        fontSize: 12.5,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -121,57 +257,135 @@ void _showConsumerDetails(BuildContext context, Consumer consumer) {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('All Consumers'),
+        title: const Text('All Consumers'),
         actions: [
           IconButton(
-            icon: Icon(Icons.clear_all),
+            icon: const Icon(Icons.clear_all),
             onPressed: _clearFilters,
             tooltip: 'Clear Filters',
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            Wrap(
-              spacing: 12,
-              runSpacing: 10,
+      body: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildFilter('City', selectedCity, distinctCities,
-                    (val) => setState(() => selectedCity = val)),
-                _buildFilter('Sector', selectedSector, distinctSectors,
-                    (val) => setState(() => selectedSector = val)),
-                _buildFilter('House Type', selectedHouseType, distinctHouseTypes,
-                    (val) => setState(() => selectedHouseType = val)),
-                _buildFilter('Building', selectedBuilding, distinctBuildings,
-                    (val) => setState(() => selectedBuilding = val)),
+                Row(
+                  children: [
+                    const Icon(Icons.filter_list_rounded, color: Color(0xFF1F2937)),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Filters',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (_activeFilterCount > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDBEAFE),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '$_activeFilterCount active',
+                          style: const TextStyle(
+                            color: Color(0xFF1D4ED8),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFilter(
+                        'City',
+                        selectedCity,
+                        distinctCities,
+                        (val) => setState(() => selectedCity = val),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildFilter(
+                        'Sector',
+                        selectedSector,
+                        distinctSectors,
+                        (val) => setState(() => selectedSector = val),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFilter(
+                        'House Type',
+                        selectedHouseType,
+                        distinctHouseTypes,
+                        (val) => setState(() => selectedHouseType = val),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildFilter(
+                        'Building',
+                        selectedBuilding,
+                        distinctBuildings,
+                        (val) => setState(() => selectedBuilding = val),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
-            SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: filteredConsumers.length,
-                itemBuilder: (context, index) {
-                  final consumer = filteredConsumers[index];
-                  return Card(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 2,
-                    child: ListTile(
-                      leading: CircleAvatar(child: Text(consumer.name[0])),
-                      title: Text('${consumer.name} (${consumer.id})'),
-                      subtitle: Text('${consumer.mobile}\n${consumer.fullAddress}'),
-                      isThreeLine: true,
-                      onTap: () => _showConsumerDetails(context, consumer),
-                      trailing: Icon(Icons.arrow_forward_ios, size: 16),
-                    ),
-                    
-                  );
-                },
-              ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+            child: Row(
+              children: [
+                Text(
+                  '${filteredConsumers.length} customers found',
+                  style: const TextStyle(
+                    color: Color(0xFF4B5563),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: filteredConsumers.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No customers match your filters.',
+                      style: TextStyle(color: Color(0xFF6B7280)),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    itemCount: filteredConsumers.length,
+                    itemBuilder: (context, index) =>
+                        _buildConsumerCard(filteredConsumers[index]),
+                  ),
+          ),
+        ],
       ),
     );
   }

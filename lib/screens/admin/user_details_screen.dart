@@ -35,6 +35,21 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     _nameController.text = widget.name;
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _flatController.dispose();
+    _sectorController.dispose();
+    _floorController.dispose();
+    _landmarkController.dispose();
+    _areaController.dispose();
+    _plotController.dispose();
+    _cityController.dispose();
+    _buildingController.dispose();
+    _pincodeController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickBillFile({int? assetIndex}) async {
     try {
       final picker = ImagePicker();
@@ -942,7 +957,46 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   Widget _buildTextField(String label, TextEditingController controller) {
     return TextField(
       controller: controller,
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required int itemCount,
+    required Widget child,
+  }) {
+    return Card(
+      elevation: 1.2,
+      margin: const EdgeInsets.only(top: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          leading: Icon(icon, color: const Color(0xFF334155)),
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          subtitle: Text(
+            '$itemCount item${itemCount == 1 ? '' : 's'}',
+            style: const TextStyle(fontSize: 12.5),
+          ),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+          children: [child],
+        ),
+      ),
     );
   }
   
@@ -1037,61 +1091,131 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("User Details"),
+        title: const Text("User Details"),
         actions: [
           IconButton(
-            icon: Icon(Icons.save),
+            icon: const Icon(Icons.save),
             tooltip: 'Save Changes',
             onPressed: _confirmSaveUserDetails,
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Consumer ID: ${widget.consumerId}", style: TextStyle(fontWeight: FontWeight.bold)),
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: "Name",
-                suffixIcon: Icon(Icons.edit, size: 18),
-                helperText: "Tap to edit user name"
-              ),
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            Divider(),
-            Text("Address", style: TextStyle(fontWeight: FontWeight.bold)),
-            Card(
-              elevation: 1,
-              margin: EdgeInsets.symmetric(vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: Colors.grey.shade300),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  children: [
-                    _buildTextField("Flat No", _flatController),
-                    _buildTextField("Sector No", _sectorController),
-                    _buildTextField("Floor", _floorController),
-                    _buildTextField("Landmark", _landmarkController),
-                    _buildTextField("Area", _areaController),
-                    _buildTextField("Plot", _plotController),
-                    _buildTextField("City", _cityController),
-                    _buildTextField("Building Name", _buildingController),
-                    _buildTextField("Pincode", _pincodeController),
-                  ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF8FAFC), Color(0xFFFFFFFF)],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Card(
+                elevation: 1.2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          const CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Color(0xFFDBEAFE),
+                            child: Icon(Icons.person_outline, color: Color(0xFF1D4ED8)),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Consumer Profile',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "ID: ${widget.consumerId}",
+                                  style: const TextStyle(color: Color(0xFF4B5563)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: "Name",
+                          suffixIcon: const Icon(Icons.edit_outlined, size: 18),
+                          helperText: "Tap to edit user name",
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-
-            SizedBox(height: 20),
-            ExpansionTile(
-              title: Text("Assets"),
-              children: [
+              const SizedBox(height: 10),
+              Card(
+                elevation: 1.2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.location_on_outlined, color: Color(0xFF334155)),
+                          SizedBox(width: 8),
+                          Text(
+                            'Address',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _buildTextField("Flat No", _flatController),
+                      const SizedBox(height: 8),
+                      _buildTextField("Sector No", _sectorController),
+                      const SizedBox(height: 8),
+                      _buildTextField("Floor", _floorController),
+                      const SizedBox(height: 8),
+                      _buildTextField("Landmark", _landmarkController),
+                      const SizedBox(height: 8),
+                      _buildTextField("Area", _areaController),
+                      const SizedBox(height: 8),
+                      _buildTextField("Plot", _plotController),
+                      const SizedBox(height: 8),
+                      _buildTextField("City", _cityController),
+                      const SizedBox(height: 8),
+                      _buildTextField("Building Name", _buildingController),
+                      const SizedBox(height: 8),
+                      _buildTextField("Pincode", _pincodeController),
+                    ],
+                  ),
+                ),
+              ),
+              _buildSectionCard(
+                title: "Assets",
+                icon: Icons.devices_other_outlined,
+                itemCount: assets.length,
+                child: Column(
+                  children: [
                 for (var asset in assets)
                   ExpansionTile(
                     title: Text("${asset['name']} (${asset['id']})"),
@@ -1254,12 +1378,15 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     ),
                   ),
                 )
-              ],
-            ),
-
-            ExpansionTile(
-              title: Text("Family Details"),
-              children: [
+                  ],
+                ),
+              ),
+              _buildSectionCard(
+                title: "Family Details",
+                icon: Icons.people_alt_outlined,
+                itemCount: familyMembers.length,
+                child: Column(
+                  children: [
                 for (var member in familyMembers)
                   ExpansionTile(
                     title: Text(member['name']),
@@ -1302,12 +1429,15 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     ),
                   ),
                 )
-              ],
-            ),
-
-            ExpansionTile(
-              title: Text("Vehicle Details"),
-              children: [
+                  ],
+                ),
+              ),
+              _buildSectionCard(
+                title: "Vehicle Details",
+                icon: Icons.directions_car_outlined,
+                itemCount: vehicles.length,
+                child: Column(
+                  children: [
                 for (var vehicle in vehicles)
                   ExpansionTile(
                     title: Text(vehicle['number']),
@@ -1380,9 +1510,11 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     ),
                   ),
                 )
-              ],
-            ),
-          ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
