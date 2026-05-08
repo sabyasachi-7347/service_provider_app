@@ -6,8 +6,14 @@ import 'package:image_picker/image_picker.dart';
 class UserDetailsScreen extends StatefulWidget {
   final String consumerId;
   final String name;
+  final bool isAmcActive;
 
-  const UserDetailsScreen({super.key, required this.consumerId, required this.name});
+  const UserDetailsScreen({
+    super.key,
+    required this.consumerId,
+    required this.name,
+    this.isAmcActive = false,
+  });
 
   @override
   _UserDetailsScreenState createState() => _UserDetailsScreenState();
@@ -999,6 +1005,30 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
       ),
     );
   }
+
+  Widget _buildAmcStatusBadge() {
+    final Color backgroundColor =
+        widget.isAmcActive ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+
+    return Tooltip(
+      message: widget.isAmcActive ? 'AMC Active' : 'AMC Not Active',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: const Text(
+          'AMC',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
   
   void _confirmSaveUserDetails() {
     showDialog(
@@ -1132,12 +1162,20 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Consumer Profile',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 16,
-                                  ),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    const Text(
+                                      'Consumer Profile',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    _buildAmcStatusBadge(),
+                                  ],
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
