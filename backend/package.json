@@ -1,0 +1,43 @@
+{
+  "name": "service-provider-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NestJS API for the service provider Flutter app.",
+  "scripts": {
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "build": "nest build",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@nestjs/common": "latest",
+    "@nestjs/core": "latest",
+    "@nestjs/platform-express": "latest",
+    "class-transformer": "latest",
+    "class-validator": "latest",
+    "dotenv": "^17.4.2",
+    "firebase-admin": "^13.9.0",
+    "reflect-metadata": "latest",
+    "rxjs": "latest"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "latest",
+    "@nestjs/schematics": "latest",
+    "@nestjs/testing": "latest",
+    "@types/express": "latest",
+    "@types/jest": "latest",
+    "@types/node": "latest",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "eslint": "latest",
+    "jest": "latest",
+    "prettier": "latest",
+    "source-map-support": "latest",
+    "ts-jest": "latest",
+    "ts-loader": "latest",
+    "ts-node": "latest",
+    "tsconfig-paths": "latest",
+    "typescript": "latest"
+  }
+}
