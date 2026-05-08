@@ -33,6 +33,13 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Local environment and Firebase service account credentials
+.env
+.env.*
+!*.example
+backend/serviceAccount*.json
+backend/*service-account*.json
+
 # Symbolication related
 app.*.symbols
 
