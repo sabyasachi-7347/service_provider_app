@@ -1,5 +1,6 @@
 // lib/screens/admin/all_consumers_screen.dart
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 import '../admin/user_details_screen.dart';
 
 class Consumer {
@@ -11,6 +12,7 @@ class Consumer {
   final String houseType;
   final String building;
   final String pincode;
+  final bool isAmcActive;
 
   Consumer({
     required this.id,
@@ -21,7 +23,22 @@ class Consumer {
     required this.houseType,
     required this.building,
     required this.pincode,
+    required this.isAmcActive,
   });
+
+  factory Consumer.fromJson(Map<String, dynamic> json) {
+    return Consumer(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      mobile: json['mobile']?.toString() ?? '',
+      city: json['city']?.toString() ?? '',
+      sector: json['sector']?.toString() ?? '',
+      houseType: json['houseType']?.toString() ?? '',
+      building: json['building']?.toString() ?? '',
+      pincode: json['pincode']?.toString() ?? '',
+      isAmcActive: json['isAmcActive'] == true,
+    );
+  }
 
   String get fullAddress =>
       '$building, Sector $sector, $city, $pincode [$houseType]';
@@ -35,29 +52,9 @@ class AllConsumersScreen extends StatefulWidget {
 }
 
 class _AllConsumersScreenState extends State<AllConsumersScreen> {
-  List<Consumer> allConsumers = [
-    Consumer(
-      id: 'C001',
-      name: 'Amit Sharma',
-      mobile: '9876543210',
-      city: 'Delhi',
-      sector: '15',
-      houseType: 'Apartment',
-      building: 'Tower A',
-      pincode: '110001',
-    ),
-    Consumer(
-      id: 'C002',
-      name: 'Priya Singh',
-      mobile: '9123456789',
-      city: 'Delhi',
-      sector: '20',
-      houseType: 'Villa',
-      building: 'Green Villa',
-      pincode: '110003',
-    ),
-    // Add more dummy consumers here
-  ];
+  List<Consumer> allConsumers = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   // Filter values
   String? selectedCity;
@@ -74,11 +71,43 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
   List<String> get distinctBuildings =>
       allConsumers.map((e) => e.building).toSet().toList();
 
+  @override
+  void initState() {
+    super.initState();
+    _loadConsumers();
+  }
+
+  Future<void> _loadConsumers() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final data = await ApiService.getConsumers();
+      if (!mounted) return;
+      setState(() {
+        allConsumers =
+            data
+                .map((item) => Consumer.fromJson(item as Map<String, dynamic>))
+                .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
   List<Consumer> get filteredConsumers {
     return allConsumers.where((consumer) {
       return (selectedCity == null || consumer.city == selectedCity) &&
           (selectedSector == null || consumer.sector == selectedSector) &&
-          (selectedHouseType == null || consumer.houseType == selectedHouseType) &&
+          (selectedHouseType == null ||
+              consumer.houseType == selectedHouseType) &&
           (selectedBuilding == null || consumer.building == selectedBuilding);
     }).toList();
   }
@@ -105,8 +134,12 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            UserDetailsScreen(consumerId: consumer.id, name: consumer.name),
+        builder:
+            (_) => UserDetailsScreen(
+              consumerId: consumer.id,
+              name: consumer.name,
+              isAmcActive: consumer.isAmcActive,
+            ),
       ),
     );
   }
@@ -131,15 +164,9 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
         ),
       ),
       items: [
-        const DropdownMenuItem<String>(
-          value: null,
-          child: Text('All'),
-        ),
+        const DropdownMenuItem<String>(value: null, child: Text('All')),
         ...options.map(
-          (value) => DropdownMenuItem<String>(
-            value: value,
-            child: Text(value),
-          ),
+          (value) => DropdownMenuItem<String>(value: value, child: Text(value)),
         ),
       ],
       onChanged: onChanged,
@@ -164,7 +191,7 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
                     radius: 20,
                     backgroundColor: const Color(0xFFDBEAFE),
                     child: Text(
-                      consumer.name[0],
+                      consumer.name.isNotEmpty ? consumer.name[0] : '?',
                       style: const TextStyle(
                         color: Color(0xFF1D4ED8),
                         fontWeight: FontWeight.bold,
@@ -195,13 +222,20 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded, color: Color(0xFF9CA3AF)),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Color(0xFF9CA3AF),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.call_outlined, size: 16, color: Color(0xFF4B5563)),
+                  const Icon(
+                    Icons.call_outlined,
+                    size: 16,
+                    color: Color(0xFF4B5563),
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     consumer.mobile,
@@ -212,7 +246,10 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
                   ),
                   const SizedBox(width: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF3F4F6),
                       borderRadius: BorderRadius.circular(999),
@@ -232,7 +269,11 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF4B5563)),
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: Color(0xFF4B5563),
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -260,6 +301,11 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
         title: const Text('All Consumers'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadConsumers,
+            tooltip: 'Refresh',
+          ),
+          IconButton(
             icon: const Icon(Icons.clear_all),
             onPressed: _clearFilters,
             tooltip: 'Clear Filters',
@@ -281,7 +327,10 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.filter_list_rounded, color: Color(0xFF1F2937)),
+                    const Icon(
+                      Icons.filter_list_rounded,
+                      color: Color(0xFF1F2937),
+                    ),
                     const SizedBox(width: 8),
                     const Text(
                       'Filters',
@@ -293,7 +342,10 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
                     const Spacer(),
                     if (_activeFilterCount > 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFDBEAFE),
                           borderRadius: BorderRadius.circular(999),
@@ -371,19 +423,34 @@ class _AllConsumersScreenState extends State<AllConsumersScreen> {
             ),
           ),
           Expanded(
-            child: filteredConsumers.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No customers match your filters.',
-                      style: TextStyle(color: Color(0xFF6B7280)),
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _errorMessage != null
+                    ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          'Failed to load consumers: $_errorMessage',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Color(0xFFDC2626)),
+                        ),
+                      ),
+                    )
+                    : filteredConsumers.isEmpty
+                    ? const Center(
+                      child: Text(
+                        'No customers match your filters.',
+                        style: TextStyle(color: Color(0xFF6B7280)),
+                      ),
+                    )
+                    : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      itemCount: filteredConsumers.length,
+                      itemBuilder:
+                          (context, index) =>
+                              _buildConsumerCard(filteredConsumers[index]),
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                    itemCount: filteredConsumers.length,
-                    itemBuilder: (context, index) =>
-                        _buildConsumerCard(filteredConsumers[index]),
-                  ),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 // screens/dashboard/service_provider_dashboard.dart
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 import '../login_screen.dart';
 
 /// Feedback tied to a service request for clear traceability.
@@ -7,14 +8,78 @@ class FeedbackEntry {
   final String requestId;
   final String message;
 
-  const FeedbackEntry({
-    required this.requestId,
-    required this.message,
-  });
+  const FeedbackEntry({required this.requestId, required this.message});
+
+  factory FeedbackEntry.fromJson(Map<String, dynamic> json) {
+    return FeedbackEntry(
+      requestId: json['requestId']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+    );
+  }
 }
 
-class ServiceProviderDashboard extends StatelessWidget {
+class ServiceProviderDashboard extends StatefulWidget {
   const ServiceProviderDashboard({super.key});
+
+  @override
+  State<ServiceProviderDashboard> createState() =>
+      _ServiceProviderDashboardState();
+}
+
+class _ServiceProviderDashboardState extends State<ServiceProviderDashboard> {
+  List<String> _activeRequests = [];
+  List<String> _previousRequests = [];
+  List<FeedbackEntry> _feedbackEntries = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboard();
+  }
+
+  Future<void> _loadDashboard() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final data = await ApiService.getServiceProviderDashboard('SP001');
+      if (!mounted) return;
+      setState(() {
+        _activeRequests = _requestLabels(data['activeRequests']);
+        _previousRequests = _requestLabels(data['previousRequests']);
+        _feedbackEntries = _feedbackList(data['feedback']);
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  List<String> _requestLabels(dynamic value) {
+    if (value is! List) return [];
+    return value.whereType<Map>().map((item) {
+      final id = item['id']?.toString() ?? 'Request';
+      final category = item['category']?.toString() ?? 'Service';
+      final status = item['status']?.toString() ?? '';
+      return '$id - $category${status.isEmpty ? '' : ' ($status)'}';
+    }).toList();
+  }
+
+  List<FeedbackEntry> _feedbackList(dynamic value) {
+    if (value is! List) return [];
+    return value
+        .whereType<Map>()
+        .map((item) => FeedbackEntry.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
 
   void _logout(BuildContext context) {
     Navigator.pushAndRemoveUntil(
@@ -60,7 +125,10 @@ class ServiceProviderDashboard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(999),
@@ -105,7 +173,10 @@ class ServiceProviderDashboard extends StatelessWidget {
                   ),
                   child: ListTile(
                     dense: true,
-                    leading: Icon(Icons.assignment_turned_in_outlined, color: color),
+                    leading: Icon(
+                      Icons.assignment_turned_in_outlined,
+                      color: color,
+                    ),
                     title: Text(
                       item,
                       style: const TextStyle(fontWeight: FontWeight.w600),
@@ -119,7 +190,10 @@ class ServiceProviderDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildFeedbackSection(BuildContext context, List<FeedbackEntry> entries) {
+  Widget _buildFeedbackSection(
+    BuildContext context,
+    List<FeedbackEntry> entries,
+  ) {
     const Color color = Color(0xFF059669);
 
     return Card(
@@ -139,20 +213,24 @@ class ServiceProviderDashboard extends StatelessWidget {
                     color: color.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.rate_review_outlined, color: color, size: 20),
+                  child: const Icon(
+                    Icons.rate_review_outlined,
+                    color: color,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 const Expanded(
                   child: Text(
                     'Feedbacks & Reviews',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(999),
@@ -183,13 +261,20 @@ class ServiceProviderDashboard extends StatelessWidget {
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
                           padding: const EdgeInsets.only(top: 2),
-                          child: Icon(Icons.format_quote_rounded, color: color.withOpacity(0.7), size: 20),
+                          child: Icon(
+                            Icons.format_quote_rounded,
+                            color: color.withOpacity(0.7),
+                            size: 20,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -198,7 +283,11 @@ class ServiceProviderDashboard extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.tag_outlined, size: 14, color: color.withOpacity(0.85)),
+                                  Icon(
+                                    Icons.tag_outlined,
+                                    size: 14,
+                                    color: color.withOpacity(0.85),
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     'Request',
@@ -210,11 +299,16 @@ class ServiceProviderDashboard extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 6),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: color.withOpacity(0.12),
                                       borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: color.withOpacity(0.35)),
+                                      border: Border.all(
+                                        color: color.withOpacity(0.35),
+                                      ),
                                     ),
                                     child: Text(
                                       entry.requestId,
@@ -270,25 +364,16 @@ class ServiceProviderDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Placeholder data
-    final activeRequests = ['Request #101', 'Request #102'];
-    final previousRequests = ['Request #099', 'Request #098'];
-    final feedbackEntries = [
-      const FeedbackEntry(
-        requestId: '#101',
-        message: 'Great service!',
-      ),
-      const FeedbackEntry(
-        requestId: '#098',
-        message: 'Could be faster',
-      ),
-    ];
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Service Provider Dashboard'),
         centerTitle: true,
         actions: [
+          IconButton(
+            tooltip: 'Refresh',
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadDashboard,
+          ),
           IconButton(
             tooltip: 'Logout',
             icon: const Icon(Icons.logout),
@@ -304,56 +389,69 @@ class ServiceProviderDashboard extends StatelessWidget {
             colors: [Color(0xFFF8FAFC), Color(0xFFFFFFFF)],
           ),
         ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFA7F3D0)),
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome back',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF065F46),
+        child:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      'Failed to load dashboard: $_errorMessage',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Color(0xFFDC2626)),
+                    ),
+                  ),
+                )
+                : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        margin: const EdgeInsets.only(bottom: 14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFA7F3D0)),
+                        ),
+                        child: const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome back',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF065F46),
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Track your service requests and recent customer feedback quickly.',
+                              style: TextStyle(color: Color(0xFF047857)),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Track your service requests and recent customer feedback quickly.',
-                      style: TextStyle(color: Color(0xFF047857)),
-                    ),
-                  ],
+                      _buildSection(
+                        title: 'Active Requests',
+                        icon: Icons.flash_on_outlined,
+                        color: const Color(0xFF2563EB),
+                        items: _activeRequests,
+                      ),
+                      _buildSection(
+                        title: 'Previous Requests',
+                        icon: Icons.history_outlined,
+                        color: const Color(0xFF7C3AED),
+                        items: _previousRequests,
+                      ),
+                      _buildFeedbackSection(context, _feedbackEntries),
+                    ],
+                  ),
                 ),
-              ),
-              _buildSection(
-                title: 'Active Requests',
-                icon: Icons.flash_on_outlined,
-                color: const Color(0xFF2563EB),
-                items: activeRequests,
-              ),
-              _buildSection(
-                title: 'Previous Requests',
-                icon: Icons.history_outlined,
-                color: const Color(0xFF7C3AED),
-                items: previousRequests,
-              ),
-              _buildFeedbackSection(context, feedbackEntries),
-            ],
-          ),
-        ),
       ),
     );
   }
 }
-

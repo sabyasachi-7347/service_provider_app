@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'forgot_password_screen.dart';
 import '../widgets/otp_dialog.dart';
+import '../services/api_service.dart';
 import 'dashboard/admin_dashboard.dart';
 import 'dashboard/service_provider_dashboard.dart'; // Placeholder for demo
 import 'dashboard/consumer_dashboard.dart';
@@ -17,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController userIdController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool useOtp = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -25,22 +27,45 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
-    // Fake login logic
-    if (userIdController.text == 'admin') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => AdminDashboard()),
+  Future<void> _handleLogin() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await ApiService.login(
+        userId: userIdController.text.trim(),
+        password: passwordController.text,
       );
-    } else if(userIdController.text == 'sp') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => ServiceProviderDashboard()),
-      );
-    } else if(userIdController.text == 'con') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => ConsumerDashboard()),
+      final user = response['user'] as Map<String, dynamic>;
+      final role = user['role']?.toString();
+
+      if (!mounted) return;
+      if (role == 'admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminDashboard()),
+        );
+      } else if (role == 'service_provider') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ServiceProviderDashboard()),
+        );
+      } else if (role == 'consumer') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ConsumerDashboard()),
+        );
+      } else {
+        throw Exception('Unknown user role');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }
@@ -48,9 +73,12 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showOtpDialog() {
     showDialog(
       context: context,
-      builder: (_) => OtpDialog(
-        onVerified: _handleLogin,
-      ),
+      builder:
+          (_) => OtpDialog(
+            onVerified: () {
+              _handleLogin();
+            },
+          ),
     );
   }
 
@@ -105,7 +133,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Text(
                           'Sign in to continue to your account',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+                          style: TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(height: 24),
                         TextField(
@@ -150,7 +181,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             value: useOtp,
                             activeColor: accentColor,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                            ),
                             onChanged: (value) {
                               setState(() {
                                 useOtp = value;
@@ -162,7 +195,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(
                           height: 50,
                           child: ElevatedButton(
-                            onPressed: useOtp ? _showOtpDialog : _handleLogin,
+                            onPressed:
+                                _isLoading
+                                    ? null
+                                    : useOtp
+                                    ? _showOtpDialog
+                                    : _handleLogin,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: primaryColor,
                               foregroundColor: Colors.white,
@@ -171,9 +209,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            child: const Text(
-                              'Login',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                            child: Text(
+                              _isLoading ? 'Signing in...' : 'Login',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
@@ -182,7 +223,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => ForgotPasswordScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => ForgotPasswordScreen(),
+                              ),
                             );
                           },
                           child: const Text(

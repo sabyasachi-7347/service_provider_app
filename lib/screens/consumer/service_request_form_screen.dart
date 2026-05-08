@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 
 class ServiceRequestFormScreen extends StatefulWidget {
   final String serviceName;
@@ -6,7 +7,8 @@ class ServiceRequestFormScreen extends StatefulWidget {
   const ServiceRequestFormScreen({super.key, required this.serviceName});
 
   @override
-  State<ServiceRequestFormScreen> createState() => _ServiceRequestFormScreenState();
+  State<ServiceRequestFormScreen> createState() =>
+      _ServiceRequestFormScreenState();
 }
 
 class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
@@ -19,6 +21,7 @@ class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
   final TextEditingController _landmarkController = TextEditingController();
   final TextEditingController _pincodeController = TextEditingController();
   DateTime? _preferredDate;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -60,7 +63,7 @@ class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
     return null;
   }
 
-  void _submitRequest() {
+  Future<void> _submitRequest() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
@@ -74,13 +77,45 @@ class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Request submitted for ${widget.serviceName}'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    Navigator.pop(context);
+    setState(() => _isSubmitting = true);
+
+    try {
+      await ApiService.createRequest({
+        'consumerId': 'C001',
+        'consumerName': 'Amit Sharma',
+        'mobile': '9876543210',
+        'category': widget.serviceName,
+        'description':
+            '${_issueTitleController.text.trim()}: ${_descriptionController.text.trim()}',
+        'preferredDate': _preferredDate!.toIso8601String(),
+        'address': {
+          'buildingName': _addressLineController.text.trim(),
+          'city': _cityController.text.trim(),
+          'sector': _sectorController.text.trim(),
+          'landmark': _landmarkController.text.trim(),
+          'pincode': _pincodeController.text.trim(),
+        },
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Request submitted for ${widget.serviceName}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to submit request: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   InputDecoration _inputDecoration(String label, {IconData? icon}) {
@@ -133,32 +168,44 @@ class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _issueTitleController,
-                  decoration: _inputDecoration('Issue title', icon: Icons.title_outlined),
-                  validator: (value) => _requiredValidator(value, 'Issue title'),
+                  decoration: _inputDecoration(
+                    'Issue title',
+                    icon: Icons.title_outlined,
+                  ),
+                  validator:
+                      (value) => _requiredValidator(value, 'Issue title'),
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _descriptionController,
                   minLines: 3,
                   maxLines: 4,
-                  decoration:
-                      _inputDecoration('Problem description', icon: Icons.description_outlined),
-                  validator: (value) => _requiredValidator(value, 'Problem description'),
+                  decoration: _inputDecoration(
+                    'Problem description',
+                    icon: Icons.description_outlined,
+                  ),
+                  validator:
+                      (value) =>
+                          _requiredValidator(value, 'Problem description'),
                 ),
                 const SizedBox(height: 10),
                 InkWell(
                   onTap: _pickPreferredDate,
                   borderRadius: BorderRadius.circular(12),
                   child: InputDecorator(
-                    decoration: _inputDecoration('Preferred service date', icon: Icons.event_outlined),
+                    decoration: _inputDecoration(
+                      'Preferred service date',
+                      icon: Icons.event_outlined,
+                    ),
                     child: Text(
                       _preferredDate == null
                           ? 'Select date'
                           : _formatDate(_preferredDate!),
                       style: TextStyle(
-                        color: _preferredDate == null
-                            ? const Color(0xFF6B7280)
-                            : const Color(0xFF111827),
+                        color:
+                            _preferredDate == null
+                                ? const Color(0xFF6B7280)
+                                : const Color(0xFF111827),
                       ),
                     ),
                   ),
@@ -175,31 +222,47 @@ class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _addressLineController,
-                  decoration: _inputDecoration('House / Flat / Building', icon: Icons.home_outlined),
+                  decoration: _inputDecoration(
+                    'House / Flat / Building',
+                    icon: Icons.home_outlined,
+                  ),
                   validator: (value) => _requiredValidator(value, 'Address'),
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _cityController,
-                  decoration: _inputDecoration('City', icon: Icons.location_city_outlined),
+                  decoration: _inputDecoration(
+                    'City',
+                    icon: Icons.location_city_outlined,
+                  ),
                   validator: (value) => _requiredValidator(value, 'City'),
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _sectorController,
-                  decoration: _inputDecoration('Sector / Area', icon: Icons.map_outlined),
-                  validator: (value) => _requiredValidator(value, 'Sector / Area'),
+                  decoration: _inputDecoration(
+                    'Sector / Area',
+                    icon: Icons.map_outlined,
+                  ),
+                  validator:
+                      (value) => _requiredValidator(value, 'Sector / Area'),
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _landmarkController,
-                  decoration: _inputDecoration('Landmark', icon: Icons.place_outlined),
+                  decoration: _inputDecoration(
+                    'Landmark',
+                    icon: Icons.place_outlined,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _pincodeController,
                   keyboardType: TextInputType.number,
-                  decoration: _inputDecoration('Pincode', icon: Icons.pin_outlined),
+                  decoration: _inputDecoration(
+                    'Pincode',
+                    icon: Icons.pin_outlined,
+                  ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Pincode is required';
@@ -214,9 +277,18 @@ class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
                 SizedBox(
                   height: 48,
                   child: ElevatedButton.icon(
-                    onPressed: _submitRequest,
-                    icon: const Icon(Icons.send_rounded),
-                    label: const Text('Submit Request'),
+                    onPressed: _isSubmitting ? null : _submitRequest,
+                    icon:
+                        _isSubmitting
+                            ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : const Icon(Icons.send_rounded),
+                    label: Text(
+                      _isSubmitting ? 'Submitting...' : 'Submit Request',
+                    ),
                   ),
                 ),
               ],

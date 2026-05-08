@@ -1,11 +1,13 @@
 // lib/screens/admin/all_service_providers_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../services/api_service.dart';
 
 class ServiceProvider {
   final String id;
   final String name;
   final String mobile;
+
   /// Service offering (e.g. Electrician) — used for filters as "category".
   final String serviceType;
   final String fullAddressLine;
@@ -27,6 +29,21 @@ class ServiceProvider {
     required this.businessType,
     required this.rating,
   });
+
+  factory ServiceProvider.fromJson(Map<String, dynamic> json) {
+    return ServiceProvider(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      mobile: json['mobile']?.toString() ?? '',
+      serviceType: json['serviceType']?.toString() ?? '',
+      fullAddressLine: json['fullAddressLine']?.toString() ?? '',
+      city: json['city']?.toString() ?? '',
+      state: json['state']?.toString() ?? '',
+      pincode: json['pincode']?.toString() ?? '',
+      businessType: json['businessType']?.toString() ?? '',
+      rating: (json['rating'] as num?)?.toDouble() ?? 0,
+    );
+  }
 
   /// Alias for filter dropdowns that still use "category".
   String get category => serviceType;
@@ -70,7 +87,8 @@ class _AddServiceProviderSheet extends StatefulWidget {
   });
 
   @override
-  State<_AddServiceProviderSheet> createState() => _AddServiceProviderSheetState();
+  State<_AddServiceProviderSheet> createState() =>
+      _AddServiceProviderSheetState();
 }
 
 class _AddServiceProviderSheetState extends State<_AddServiceProviderSheet> {
@@ -160,16 +178,18 @@ class _AddServiceProviderSheetState extends State<_AddServiceProviderSheet> {
                 controller: _nameCtrl,
                 decoration: _fieldDecoration('Name'),
                 textCapitalization: TextCapitalization.words,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter name' : null,
+                validator:
+                    (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Enter name' : null,
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
                 value: _serviceType,
                 decoration: _fieldDecoration('Service type'),
-                items: widget.serviceTypes
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
+                items:
+                    widget.serviceTypes
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
                 onChanged: (v) {
                   if (v != null) setState(() => _serviceType = v);
                 },
@@ -178,9 +198,10 @@ class _AddServiceProviderSheetState extends State<_AddServiceProviderSheet> {
               DropdownButtonFormField<String>(
                 value: _businessType,
                 decoration: _fieldDecoration('Type of business'),
-                items: widget.businessTypes
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
+                items:
+                    widget.businessTypes
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
                 onChanged: (v) {
                   if (v != null) setState(() => _businessType = v);
                 },
@@ -215,24 +236,29 @@ class _AddServiceProviderSheetState extends State<_AddServiceProviderSheet> {
                 decoration: _fieldDecoration('Full address'),
                 maxLines: 2,
                 textCapitalization: TextCapitalization.sentences,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter full address' : null,
+                validator:
+                    (v) =>
+                        (v == null || v.trim().isEmpty)
+                            ? 'Enter full address'
+                            : null,
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _cityCtrl,
                 decoration: _fieldDecoration('City'),
                 textCapitalization: TextCapitalization.words,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter city' : null,
+                validator:
+                    (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Enter city' : null,
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _stateCtrl,
                 decoration: _fieldDecoration('State'),
                 textCapitalization: TextCapitalization.words,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter state' : null,
+                validator:
+                    (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Enter state' : null,
               ),
               const SizedBox(height: 10),
               TextFormField(
@@ -285,7 +311,9 @@ class AllServiceProvidersScreen extends StatefulWidget {
 }
 
 class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
-  late List<ServiceProvider> _serviceProviders;
+  List<ServiceProvider> _serviceProviders = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   final TextEditingController _searchController = TextEditingController();
   String? _selectedCity;
@@ -315,32 +343,35 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
   @override
   void initState() {
     super.initState();
-    _serviceProviders = [
-      ServiceProvider(
-        id: 'SP001',
-        name: 'Raj Electrician',
-        mobile: '9876543210',
-        fullAddressLine: 'Block B, Shop 12',
-        city: 'Delhi',
-        state: 'Delhi',
-        pincode: '110005',
-        serviceType: 'Electrician',
-        businessType: 'Shop',
-        rating: 4.5,
-      ),
-      ServiceProvider(
-        id: 'SP002',
-        name: 'Neha Plumber',
-        mobile: '9123456789',
-        fullAddressLine: 'Service Plaza, Unit 4',
-        city: 'Gurgaon',
-        state: 'Haryana',
-        pincode: '122001',
-        serviceType: 'Plumber',
-        businessType: 'Workshop',
-        rating: 4.2,
-      ),
-    ];
+    _loadProviders();
+  }
+
+  Future<void> _loadProviders() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final data = await ApiService.getServiceProviders();
+      if (!mounted) return;
+      setState(() {
+        _serviceProviders =
+            data
+                .map(
+                  (item) =>
+                      ServiceProvider.fromJson(item as Map<String, dynamic>),
+                )
+                .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -358,7 +389,8 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
   List<ServiceProvider> get _filteredProviders {
     final query = _searchController.text.trim().toLowerCase();
     return _serviceProviders.where((sp) {
-      final searchMatches = query.isEmpty ||
+      final searchMatches =
+          query.isEmpty ||
           sp.name.toLowerCase().contains(query) ||
           sp.id.toLowerCase().contains(query) ||
           sp.mobile.contains(query);
@@ -388,58 +420,54 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
     });
   }
 
-  int _nextIdNumber() {
-    int maxNum = 0;
-    for (final sp in _serviceProviders) {
-      final match = RegExp(r'^SP(\d+)$').firstMatch(sp.id);
-      if (match != null) {
-        final n = int.tryParse(match.group(1) ?? '0') ?? 0;
-        if (n > maxNum) maxNum = n;
-      }
-    }
-    return maxNum + 1;
-  }
-
   Future<void> _openAddProviderForm() async {
     final AddProviderSheetResult? result =
         await showModalBottomSheet<AddProviderSheetResult>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => _AddServiceProviderSheet(
-        serviceTypes: _serviceTypes,
-        businessTypes: _businessTypes,
-      ),
-    );
+          context: context,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          builder:
+              (ctx) => _AddServiceProviderSheet(
+                serviceTypes: _serviceTypes,
+                businessTypes: _businessTypes,
+              ),
+        );
 
     if (!mounted || result == null) return;
 
-    final id = 'SP${_nextIdNumber().toString().padLeft(3, '0')}';
-    setState(() {
-      _serviceProviders = [
-        ..._serviceProviders,
-        ServiceProvider(
-          id: id,
-          name: result.name,
-          mobile: result.mobile,
-          serviceType: result.serviceType,
-          fullAddressLine: result.fullAddressLine,
-          city: result.city,
-          state: result.state,
-          pincode: result.pincode,
-          businessType: result.businessType,
-          rating: 0,
-        ),
-      ];
-      _selectedMinRating = 0;
-    });
+    try {
+      final created = await ApiService.createServiceProvider({
+        'name': result.name,
+        'mobile': result.mobile,
+        'serviceType': result.serviceType,
+        'businessType': result.businessType,
+        'fullAddressLine': result.fullAddressLine,
+        'city': result.city,
+        'state': result.state,
+        'pincode': result.pincode,
+      });
 
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Provider added ($id)')),
-    );
+      if (!mounted) return;
+      final provider = ServiceProvider.fromJson(created);
+      setState(() {
+        _serviceProviders = [..._serviceProviders, provider];
+        _selectedMinRating = 0;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Provider added (${provider.id})')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to add provider: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildDropdown({
@@ -463,7 +491,9 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
       ),
       items: [
         const DropdownMenuItem<String>(value: null, child: Text('All')),
-        ...options.map((item) => DropdownMenuItem(value: item, child: Text(item))),
+        ...options.map(
+          (item) => DropdownMenuItem(value: item, child: Text(item)),
+        ),
       ],
       onChanged: onChanged,
     );
@@ -518,7 +548,10 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(999),
@@ -547,7 +580,11 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.call_outlined, size: 16, color: Color(0xFF4B5563)),
+                const Icon(
+                  Icons.call_outlined,
+                  size: 16,
+                  color: Color(0xFF4B5563),
+                ),
                 const SizedBox(width: 6),
                 Text(
                   sp.mobile,
@@ -566,7 +603,11 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF4B5563)),
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 16,
+                  color: Color(0xFF4B5563),
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -592,6 +633,11 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
       appBar: AppBar(
         title: const Text('All Service Providers'),
         actions: [
+          IconButton(
+            tooltip: 'Refresh',
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadProviders,
+          ),
           IconButton(
             tooltip: 'Add provider',
             icon: const Icon(Icons.person_add_alt_1_outlined),
@@ -619,17 +665,25 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.filter_list_rounded, color: Color(0xFF1F2937)),
+                    const Icon(
+                      Icons.filter_list_rounded,
+                      color: Color(0xFF1F2937),
+                    ),
                     const SizedBox(width: 8),
                     const Text(
                       'Find Providers',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const Spacer(),
                     if (_activeFilterCount > 0)
                       Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFDBEAFE),
                           borderRadius: BorderRadius.circular(999),
@@ -677,7 +731,8 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
                         label: 'Category',
                         value: _selectedCategory,
                         options: _distinctCategories,
-                        onChanged: (val) => setState(() => _selectedCategory = val),
+                        onChanged:
+                            (val) => setState(() => _selectedCategory = val),
                       ),
                     ),
                   ],
@@ -696,7 +751,8 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
                   max: 5,
                   divisions: 10,
                   label: _selectedMinRating.toStringAsFixed(1),
-                  onChanged: (value) => setState(() => _selectedMinRating = value),
+                  onChanged:
+                      (value) => setState(() => _selectedMinRating = value),
                 ),
               ],
             ),
@@ -716,19 +772,34 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
             ),
           ),
           Expanded(
-            child: _filteredProviders.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No providers match current filters.',
-                      style: TextStyle(color: Color(0xFF6B7280)),
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _errorMessage != null
+                    ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          'Failed to load providers: $_errorMessage',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Color(0xFFDC2626)),
+                        ),
+                      ),
+                    )
+                    : _filteredProviders.isEmpty
+                    ? const Center(
+                      child: Text(
+                        'No providers match current filters.',
+                        style: TextStyle(color: Color(0xFF6B7280)),
+                      ),
+                    )
+                    : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      itemCount: _filteredProviders.length,
+                      itemBuilder:
+                          (context, index) =>
+                              _buildProviderCard(_filteredProviders[index]),
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                    itemCount: _filteredProviders.length,
-                    itemBuilder: (context, index) =>
-                        _buildProviderCard(_filteredProviders[index]),
-                  ),
           ),
         ],
       ),
