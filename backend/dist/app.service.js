@@ -33,175 +33,11 @@ let AppService = class AppService {
             'Franchise',
             'Partnership',
         ];
-        this.users = [
-            { id: 'A001', userId: 'admin', name: 'Admin', role: 'admin' },
-            { id: 'SP001', userId: 'sp', name: 'Raj Electrician', role: 'service_provider' },
-            { id: 'C001', userId: 'con', name: 'Amit Sharma', role: 'consumer' },
-        ];
-        this.consumers = [
-            {
-                id: 'C001',
-                name: 'Amit Sharma',
-                mobile: '9876543210',
-                city: 'Delhi',
-                sector: '15',
-                houseType: 'Apartment',
-                building: 'Tower A',
-                pincode: '110001',
-                isAmcActive: true,
-                address: {
-                    flatNo: '1202',
-                    sector: '15',
-                    floor: '12',
-                    landmark: 'Near Central Park',
-                    area: 'Rohini',
-                    plot: 'A-21',
-                    city: 'Delhi',
-                    buildingName: 'Tower A',
-                    pincode: '110001',
-                },
-                assets: [
-                    {
-                        id: 'AS001',
-                        name: 'Split AC',
-                        category: 'Appliance',
-                        subCategory: 'AC Service',
-                        warrantyStart: '2025-01-01',
-                        warrantyEnd: '2026-01-01',
-                        warrantyStatus: 'Active',
-                        lastServiceDate: '2025-07-01',
-                        serviceDueDate: '2025-10-01',
-                        location: 'Bedroom',
-                        billImage: null,
-                    },
-                ],
-                familyMembers: [
-                    {
-                        name: 'Riya Sharma',
-                        mobile: '9876500000',
-                        dob: '1998-03-20',
-                        age: 27,
-                        healthInsurance: 'HDFC Health',
-                        insuranceExpiry: '2026-03-20',
-                    },
-                ],
-                vehicles: [
-                    {
-                        number: 'DL01AB1234',
-                        owner: 'Amit Sharma',
-                        insurance: 'POL12345',
-                        insuranceExpiry: '2026-05-01',
-                        insuranceStatus: 'Valid',
-                        puc: 'PUC12345',
-                        pucExpiry: '2025-11-01',
-                        pucStatus: 'Valid',
-                        fines: 'None',
-                    },
-                ],
-            },
-            {
-                id: 'C002',
-                name: 'Priya Singh',
-                mobile: '9123456789',
-                city: 'Delhi',
-                sector: '20',
-                houseType: 'Villa',
-                building: 'Green Villa',
-                pincode: '110003',
-                isAmcActive: false,
-                address: {
-                    flatNo: '22',
-                    sector: '20',
-                    landmark: 'Near Market',
-                    area: 'Dwarka',
-                    city: 'Delhi',
-                    buildingName: 'Green Villa',
-                    pincode: '110003',
-                },
-                assets: [],
-                familyMembers: [],
-                vehicles: [],
-            },
-        ];
-        this.serviceProviders = [
-            {
-                id: 'SP001',
-                name: 'Raj Electrician',
-                mobile: '9876543210',
-                fullAddressLine: 'Block B, Shop 12',
-                city: 'Delhi',
-                state: 'Delhi',
-                pincode: '110005',
-                serviceType: 'Electrician',
-                businessType: 'Shop',
-                rating: 4.5,
-            },
-            {
-                id: 'SP002',
-                name: 'Neha Plumber',
-                mobile: '9123456789',
-                fullAddressLine: 'Service Plaza, Unit 4',
-                city: 'Gurgaon',
-                state: 'Haryana',
-                pincode: '122001',
-                serviceType: 'Plumber',
-                businessType: 'Workshop',
-                rating: 4.2,
-            },
-        ];
-        this.requests = [
-            {
-                id: 'CR001',
-                consumerId: 'C001',
-                consumerName: 'Amit Sharma',
-                mobile: '9876543210',
-                category: 'Electricity',
-                description: 'Frequent power cuts.',
-                date: '2025-07-12',
-                preferredDate: '2025-07-15',
-                status: 'Open',
-                assignedProviderId: 'SP001',
-            },
-            {
-                id: 'CR002',
-                consumerId: 'C002',
-                consumerName: 'Priya Singh',
-                mobile: '9123456789',
-                category: 'Water Supply',
-                description: 'Low water pressure in the morning.',
-                date: '2025-07-10',
-                preferredDate: '2025-07-12',
-                status: 'In Progress',
-                assignedProviderId: 'SP002',
-            },
-            {
-                id: 'CR003',
-                consumerId: 'C001',
-                consumerName: 'Amit Sharma',
-                mobile: '9876543210',
-                category: 'Maintenance',
-                description: 'Street light not working.',
-                date: '2025-07-08',
-                status: 'Closed',
-                assignedProviderId: 'SP001',
-            },
-        ];
-        this.feedback = [
-            {
-                id: 'FB001',
-                requestId: 'CR001',
-                serviceProviderId: 'SP001',
-                message: 'Great service!',
-                createdAt: '2025-07-16T10:00:00.000Z',
-            },
-            {
-                id: 'FB002',
-                requestId: 'CR003',
-                serviceProviderId: 'SP001',
-                message: 'Could be faster',
-                createdAt: '2025-07-09T10:00:00.000Z',
-            },
-        ];
+        this.users = [];
+        this.consumers = [];
+        this.serviceProviders = [];
+        this.requests = [];
+        this.feedback = [];
     }
     async login(dto) {
         const users = await this.getCollection('users');
@@ -341,6 +177,43 @@ let AppService = class AppService {
             throw new common_1.NotFoundException(`Request ${id} not found`);
         }
         request.status = dto.status;
+        await this.saveDocument('requests', id, request);
+        return request;
+    }
+    async getAllRequests() {
+        return this.getCollection('requests');
+    }
+    async getAllServiceProviders() {
+        return this.getCollection('serviceProviders');
+    }
+    async getOpenUnassignedRequests() {
+        const requests = await this.getAllRequests();
+        return requests.filter((request) => request.status === 'Open' && !request.assignedProviderId);
+    }
+    async getRequestForAllocation(id) {
+        const request = await this.getDocument('requests', id);
+        if (!request) {
+            throw new common_1.NotFoundException(`Request ${id} not found`);
+        }
+        if (request.status === 'Closed') {
+            throw new common_1.BadRequestException(`Request ${id} is closed`);
+        }
+        if (request.assignedProviderId) {
+            throw new common_1.BadRequestException(`Request ${id} is already assigned to ${request.assignedProviderId}`);
+        }
+        return request;
+    }
+    async assignProviderToRequest(id, providerId, allocation) {
+        const request = await this.getRequestForAllocation(id);
+        await this.getServiceProvider(providerId);
+        request.assignedProviderId = providerId;
+        request.allocationReason = allocation.reason;
+        request.allocationConfidence = allocation.confidence;
+        request.allocationMethod = allocation.method;
+        request.allocatedAt = new Date().toISOString();
+        if (request.status === 'Open') {
+            request.status = 'In Progress';
+        }
         await this.saveDocument('requests', id, request);
         return request;
     }

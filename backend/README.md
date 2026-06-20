@@ -52,6 +52,22 @@ On first API use, Firestore is seeded only if each collection is empty. Collecti
 - `PATCH /api/requests/:id/status`
 - `POST /api/feedback`
 
+## AI allocation agent
+
+Assigns open service requests to providers using workload, category match, location, and rating. When `OPENAI_API_KEY` is set, the agent uses OpenAI for the final pick; otherwise it uses built-in heuristic scoring.
+
+- `GET /api/requests/:id/allocation-suggestion` — preview assignment (no write)
+- `POST /api/requests/:id/allocate` — assign one request (`?dryRun=true` to preview)
+- `POST /api/allocations/run` — assign all open, unassigned requests (`?dryRun=true`)
+
+Example:
+
+```bash
+curl "http://localhost:3000/api/requests/CR001/allocation-suggestion"
+curl -X POST "http://localhost:3000/api/requests/CR001/allocate"
+curl -X POST "http://localhost:3000/api/allocations/run?dryRun=true"
+```
+
 ## Flutter Flow Mapping
 
 - Admin dashboard: `GET /api/admin/summary`

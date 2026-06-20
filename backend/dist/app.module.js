@@ -8,6 +8,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
+const allocation_agent_service_1 = require("./allocation/allocation-agent.service");
+const allocation_controller_1 = require("./allocation/allocation.controller");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const firebase_service_1 = require("./firebase.service");
@@ -17,8 +19,8 @@ exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [],
-        controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService, firebase_service_1.FirebaseService],
+        controllers: [app_controller_1.AppController, allocation_controller_1.AllocationController],
+        providers: [app_service_1.AppService, firebase_service_1.FirebaseService, allocation_agent_service_1.AllocationAgentService],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map
