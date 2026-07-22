@@ -71,6 +71,23 @@ class ApiService {
     return data as Map<String, dynamic>;
   }
 
+  static Future<Map<String, dynamic>> getMetadata() async {
+    final data = await _get('metadata');
+    return data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> sendOtp(String mobile) async {
+    final data = await _post('otp/send', {'mobile': mobile});
+    return data as Map<String, dynamic>;
+  }
+
+  static Future<void> verifyOtp({
+    required String mobile,
+    required String otp,
+  }) async {
+    await _post('otp/verify', {'mobile': mobile, 'otp': otp});
+  }
+
   static Future<List<dynamic>> getConsumers({
     String? city,
     String? sector,
@@ -98,6 +115,13 @@ class ApiService {
     Map<String, dynamic> body,
   ) async {
     final data = await _patch('consumers/$id', body);
+    return data as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> createConsumer(
+    Map<String, dynamic> body,
+  ) async {
+    final data = await _post('consumers', body);
     return data as Map<String, dynamic>;
   }
 

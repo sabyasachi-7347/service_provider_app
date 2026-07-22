@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import {
+  CreateConsumerDto,
   CreateFeedbackDto,
   CreateProviderDto,
   CreateRequestDto,
@@ -50,6 +51,11 @@ export class AppController {
     @Query('q') q?: string,
   ) {
     return this.appService.getConsumers({ city, sector, houseType, building, q });
+  }
+
+  @Post('consumers')
+  createConsumer(@Body() body: CreateConsumerDto) {
+    return this.appService.createConsumer(body);
   }
 
   @Get('consumers/:id')

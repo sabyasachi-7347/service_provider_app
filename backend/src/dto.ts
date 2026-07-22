@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsDateString,
   IsIn,
   IsNotEmpty,
@@ -67,6 +68,44 @@ export class UpdateConsumerDto {
   @Type(() => AddressDto)
   @IsOptional()
   address?: AddressDto;
+}
+
+export class CreateConsumerDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mobile!: string;
+
+  @IsString()
+  @IsOptional()
+  houseType?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isAmcActive?: boolean;
+
+  @ValidateNested()
+  @Type(() => AddressDto)
+  address!: AddressDto;
+}
+
+export class SendOtpDto {
+  @IsString()
+  @IsNotEmpty()
+  mobile!: string;
+}
+
+export class VerifyOtpDto {
+  @IsString()
+  @IsNotEmpty()
+  mobile!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  otp!: string;
 }
 
 export class CreateProviderDto {

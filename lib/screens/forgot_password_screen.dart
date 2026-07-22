@@ -21,12 +21,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         SnackBar(content: Text('Reset link sent to ${inputController.text}')),
       );
     } else {
-      // Simulate OTP flow
+      final mobile = inputController.text.trim();
+      if (mobile.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Enter your mobile number')),
+        );
+        return;
+      }
+
       showDialog(
         context: context,
         builder: (_) => OtpDialog(
+          mobile: mobile,
           onVerified: () {
-            Navigator.of(context).pop(); // Close dialog
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => SetNewPasswordScreen()),

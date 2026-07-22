@@ -72,6 +72,7 @@ let AppService = class AppService {
     }
     async getConsumers(filters) {
         const consumers = await this.getCollection('consumers');
+        console.log(`Filtering consumers with: ${JSON.stringify(filters)}`);
         const query = filters.q?.trim().toLowerCase();
         return consumers.filter((consumer) => {
             const matchesQuery = !query ||
@@ -90,6 +91,25 @@ let AppService = class AppService {
         if (!consumer) {
             throw new common_1.NotFoundException(`Consumer ${id} not found`);
         }
+        return consumer;
+    }
+    async createConsumer(dto) {
+        const consumer = {
+            id: await this.nextFirestoreId('consumers', 'C'),
+            name: dto.name,
+            mobile: dto.mobile,
+            houseType: dto.houseType ?? '',
+            city: dto.address.city ?? '',
+            sector: dto.address.sector ?? '',
+            building: dto.address.buildingName ?? '',
+            pincode: dto.address.pincode ?? '',
+            isAmcActive: dto.isAmcActive ?? false,
+            address: { ...dto.address },
+            assets: [],
+            familyMembers: [],
+            vehicles: [],
+        };
+        await this.saveDocument('consumers', consumer.id, consumer);
         return consumer;
     }
     async updateConsumer(id, dto) {
@@ -166,7 +186,7 @@ let AppService = class AppService {
             date: new Date().toISOString().slice(0, 10),
             preferredDate: dto.preferredDate,
             status: 'Open',
-            address: dto.address,
+            address: { ...dto.address },
         };
         await this.saveDocument('requests', request.id, request);
         return request;

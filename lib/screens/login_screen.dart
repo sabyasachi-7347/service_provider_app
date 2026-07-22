@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'forgot_password_screen.dart';
 import '../widgets/otp_dialog.dart';
 import '../services/api_service.dart';
+import '../models/user_model.dart';
 import 'dashboard/admin_dashboard.dart';
 import 'dashboard/service_provider_dashboard.dart'; // Placeholder for demo
 import 'dashboard/consumer_dashboard.dart';
@@ -35,24 +36,25 @@ class _LoginScreenState extends State<LoginScreen> {
         userId: userIdController.text.trim(),
         password: passwordController.text,
       );
-      final user = response['user'] as Map<String, dynamic>;
-      final role = user['role']?.toString();
+      final user = AppUser.fromJson(response['user'] as Map<String, dynamic>);
 
       if (!mounted) return;
-      if (role == 'admin') {
+      if (user.role == 'admin') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const AdminDashboard()),
         );
-      } else if (role == 'service_provider') {
+      } else if (user.role == 'service_provider') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const ServiceProviderDashboard()),
+          MaterialPageRoute(
+            builder: (_) => ServiceProviderDashboard(user: user),
+          ),
         );
-      } else if (role == 'consumer') {
+      } else if (user.role == 'consumer') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const ConsumerDashboard()),
+          MaterialPageRoute(builder: (_) => ConsumerDashboard(user: user)),
         );
       } else {
         throw Exception('Unknown user role');
@@ -71,14 +73,33 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showOtpDialog() {
+    final mobile = userIdController.text.trim();
+    if (mobile.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter your User ID / Mobile Number first'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder:
           (_) => OtpDialog(
+            mobile: mobile,
             onVerified: () {
               _handleLogin();
             },
           ),
+    );
+  }
+
+  void _requestService() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ConsumerDashboard(user: null)),
     );
   }
 
@@ -231,6 +252,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text(
                             'Forgot Password?',
                             style: TextStyle(color: accentColor),
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: _requestService,
+                          icon: const Icon(
+                            Icons.support_agent_outlined,
+                            color: primaryColor,
+                          ),
+                          label: const Text(
+                            'Request Service',
+                            style: TextStyle(color: primaryColor),
                           ),
                         ),
                       ],

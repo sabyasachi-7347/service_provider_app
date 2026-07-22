@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
+  CreateConsumerDto,
   CreateFeedbackDto,
   CreateProviderDto,
   CreateRequestDto,
@@ -371,6 +372,8 @@ export class AppService {
     q?: string;
   }) {
     const consumers = await this.getCollection<Consumer>('consumers');
+    console.log(`Filtering consumers with: ${JSON.stringify(filters)}`);
+    
     const query = filters.q?.trim().toLowerCase();
     return consumers.filter((consumer) => {
       const matchesQuery =
@@ -394,6 +397,27 @@ export class AppService {
     if (!consumer) {
       throw new NotFoundException(`Consumer ${id} not found`);
     }
+    return consumer;
+  }
+
+  async createConsumer(dto: CreateConsumerDto) {
+    const consumer: Consumer = {
+      id: await this.nextFirestoreId('consumers', 'C'),
+      name: dto.name,
+      mobile: dto.mobile,
+      houseType: dto.houseType ?? '',
+      city: dto.address.city ?? '',
+      sector: dto.address.sector ?? '',
+      building: dto.address.buildingName ?? '',
+      pincode: dto.address.pincode ?? '',
+      isAmcActive: dto.isAmcActive ?? false,
+      address: { ...dto.address },
+      assets: [],
+      familyMembers: [],
+      vehicles: [],
+    };
+
+    await this.saveDocument('consumers', consumer.id, consumer);
     return consumer;
   }
 
@@ -496,7 +520,7 @@ export class AppService {
       date: new Date().toISOString().slice(0, 10),
       preferredDate: dto.preferredDate,
       status: 'Open',
-      address: dto.address,
+      address: { ...dto.address },
     };
 
     await this.saveDocument('requests', request.id, request);

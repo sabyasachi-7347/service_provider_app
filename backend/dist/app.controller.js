@@ -35,6 +35,9 @@ let AppController = class AppController {
     consumers(city, sector, houseType, building, q) {
         return this.appService.getConsumers({ city, sector, houseType, building, q });
     }
+    createConsumer(body) {
+        return this.appService.createConsumer(body);
+    }
     consumer(id) {
         return this.appService.getConsumer(id);
     }
@@ -103,6 +106,13 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], AppController.prototype, "consumers", null);
+__decorate([
+    (0, common_1.Post)('consumers'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [dto_1.CreateConsumerDto]),
+    __metadata("design:returntype", void 0)
+], AppController.prototype, "createConsumer", null);
 __decorate([
     (0, common_1.Get)('consumers/:id'),
     __param(0, (0, common_1.Param)('id')),

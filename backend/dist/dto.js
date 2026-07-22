@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateFeedbackDto = exports.UpdateRequestStatusDto = exports.CreateRequestDto = exports.CreateProviderDto = exports.UpdateConsumerDto = exports.AddressDto = exports.LoginDto = void 0;
+exports.CreateFeedbackDto = exports.UpdateRequestStatusDto = exports.CreateRequestDto = exports.CreateProviderDto = exports.VerifyOtpDto = exports.SendOtpDto = exports.CreateConsumerDto = exports.UpdateConsumerDto = exports.AddressDto = exports.LoginDto = void 0;
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 class LoginDto {
@@ -87,6 +87,55 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", AddressDto)
 ], UpdateConsumerDto.prototype, "address", void 0);
+class CreateConsumerDto {
+}
+exports.CreateConsumerDto = CreateConsumerDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateConsumerDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateConsumerDto.prototype, "mobile", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateConsumerDto.prototype, "houseType", void 0);
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateConsumerDto.prototype, "isAmcActive", void 0);
+__decorate([
+    (0, class_validator_1.ValidateNested)(),
+    (0, class_transformer_1.Type)(() => AddressDto),
+    __metadata("design:type", AddressDto)
+], CreateConsumerDto.prototype, "address", void 0);
+class SendOtpDto {
+}
+exports.SendOtpDto = SendOtpDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], SendOtpDto.prototype, "mobile", void 0);
+class VerifyOtpDto {
+}
+exports.VerifyOtpDto = VerifyOtpDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], VerifyOtpDto.prototype, "mobile", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], VerifyOtpDto.prototype, "otp", void 0);
 class CreateProviderDto {
 }
 exports.CreateProviderDto = CreateProviderDto;

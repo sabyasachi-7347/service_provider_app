@@ -1,6 +1,7 @@
 // screens/dashboard/service_provider_dashboard.dart
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../models/user_model.dart';
 import '../login_screen.dart';
 
 /// Feedback tied to a service request for clear traceability.
@@ -19,7 +20,9 @@ class FeedbackEntry {
 }
 
 class ServiceProviderDashboard extends StatefulWidget {
-  const ServiceProviderDashboard({super.key});
+  final AppUser user;
+
+  const ServiceProviderDashboard({super.key, required this.user});
 
   @override
   State<ServiceProviderDashboard> createState() =>
@@ -46,7 +49,9 @@ class _ServiceProviderDashboardState extends State<ServiceProviderDashboard> {
     });
 
     try {
-      final data = await ApiService.getServiceProviderDashboard('SP001');
+      final data = await ApiService.getServiceProviderDashboard(
+        widget.user.id,
+      );
       if (!mounted) return;
       setState(() {
         _activeRequests = _requestLabels(data['activeRequests']);

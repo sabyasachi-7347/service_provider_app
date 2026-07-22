@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../models/user_model.dart';
 import '../login_screen.dart';
 import '../consumer/service_request_form_screen.dart';
 
 class ConsumerDashboard extends StatelessWidget {
-  const ConsumerDashboard({super.key});
+  /// Null when a not-yet-registered visitor reaches this screen via the
+  /// "Request Service" guest entry point on the login screen.
+  final AppUser? user;
+
+  const ConsumerDashboard({super.key, required this.user});
 
   static const List<_ServiceOption> _serviceOptions = [
     _ServiceOption(
@@ -56,7 +61,12 @@ class ConsumerDashboard extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ServiceRequestFormScreen(serviceName: option.title),
+        builder:
+            (_) => ServiceRequestFormScreen(
+              serviceName: option.title,
+              consumerId: user?.id,
+              consumerName: user?.name,
+            ),
       ),
     );
   }
@@ -136,8 +146,8 @@ class ConsumerDashboard extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            tooltip: 'Logout',
-            icon: const Icon(Icons.logout),
+            tooltip: user == null ? 'Back to login' : 'Logout',
+            icon: Icon(user == null ? Icons.arrow_back : Icons.logout),
             onPressed: () => _logout(context),
           ),
         ],

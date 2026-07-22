@@ -13,14 +13,16 @@ const allocation_controller_1 = require("./allocation/allocation.controller");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const firebase_service_1 = require("./firebase.service");
+const otp_controller_1 = require("./otp/otp.controller");
+const otp_service_1 = require("./otp/otp.service");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [],
-        controllers: [app_controller_1.AppController, allocation_controller_1.AllocationController],
-        providers: [app_service_1.AppService, firebase_service_1.FirebaseService, allocation_agent_service_1.AllocationAgentService],
+        controllers: [app_controller_1.AppController, allocation_controller_1.AllocationController, otp_controller_1.OtpController],
+        providers: [app_service_1.AppService, firebase_service_1.FirebaseService, allocation_agent_service_1.AllocationAgentService, otp_service_1.OtpService],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

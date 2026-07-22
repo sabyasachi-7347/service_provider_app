@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import '../../widgets/otp_dialog.dart';
 
 class ServiceRequestFormScreen extends StatefulWidget {
   final String serviceName;
 
-  const ServiceRequestFormScreen({super.key, required this.serviceName});
+  /// Null when a guest (not logged in) is submitting a request — in that
+  /// case a mobile-verified consumer record is created on submit instead.
+  final String? consumerId;
+  final String? consumerName;
+
+  const ServiceRequestFormScreen({
+    super.key,
+    required this.serviceName,
+    required this.consumerId,
+    required this.consumerName,
+  });
 
   @override
   State<ServiceRequestFormScreen> createState() =>
@@ -13,8 +24,10 @@ class ServiceRequestFormScreen extends StatefulWidget {
 
 class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _issueTitleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _addressLineController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _sectorController = TextEditingController();
@@ -23,10 +36,51 @@ class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
   DateTime? _preferredDate;
   bool _isSubmitting = false;
 
+  bool get _isGuest => widget.consumerId == null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!_isGuest) {
+      _nameController.text = widget.consumerName ?? '';
+      _prefillFromConsumerProfile();
+    }
+  }
+
+  Future<void> _prefillFromConsumerProfile() async {
+    try {
+      final consumer = await ApiService.getConsumer(widget.consumerId!);
+      if (!mounted) return;
+      final address = consumer['address'] as Map<String, dynamic>?;
+      setState(() {
+        _mobileController.text = consumer['mobile']?.toString() ?? '';
+        _cityController.text =
+            address?['city']?.toString() ?? consumer['city']?.toString() ?? '';
+        _sectorController.text =
+            address?['sector']?.toString() ??
+            consumer['sector']?.toString() ??
+            '';
+        _pincodeController.text =
+            address?['pincode']?.toString() ??
+            consumer['pincode']?.toString() ??
+            '';
+        _addressLineController.text =
+            address?['buildingName']?.toString() ??
+            consumer['building']?.toString() ??
+            '';
+        _landmarkController.text = address?['landmark']?.toString() ?? '';
+      });
+    } catch (_) {
+      // No existing consumer profile to prefill from; user fills the form manually.
+    }
+  }
+
   @override
   void dispose() {
+    _nameController.dispose();
     _issueTitleController.dispose();
     _descriptionController.dispose();
+    _mobileController.dispose();
     _addressLineController.dispose();
     _cityController.dispose();
     _sectorController.dispose();
@@ -63,6 +117,16 @@ class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
     return null;
   }
 
+  Map<String, dynamic> _addressPayload() {
+    return {
+      'buildingName': _addressLineController.text.trim(),
+      'city': _cityController.text.trim(),
+      'sector': _sectorController.text.trim(),
+      'landmark': _landmarkController.text.trim(),
+      'pincode': _pincodeController.text.trim(),
+    };
+  }
+
   Future<void> _submitRequest() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
@@ -77,30 +141,83 @@ class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
       return;
     }
 
+    if (_isGuest) {
+      // New visitor: verify their mobile number via OTP before we create a
+      // consumer record and file the request under it.
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (_) => OtpDialog(
+              mobile: _mobileController.text.trim(),
+              onVerified: _createConsumerAndSubmitRequest,
+            ),
+      );
+      return;
+    }
+
+    await _createServiceRequest(
+      consumerId: widget.consumerId!,
+      consumerName: widget.consumerName!,
+    );
+  }
+
+  Future<void> _createConsumerAndSubmitRequest() async {
+    if (!mounted) return;
+    setState(() => _isSubmitting = true);
+
+    try {
+      final consumer = await ApiService.createConsumer({
+        'name': _nameController.text.trim(),
+        'mobile': _mobileController.text.trim(),
+        'address': _addressPayload(),
+      });
+      final consumerId = consumer['id']?.toString() ?? '';
+
+      await _createServiceRequest(
+        consumerId: consumerId,
+        consumerName: _nameController.text.trim(),
+        successMessage:
+            'Request submitted for ${widget.serviceName}. Your consumer ID is $consumerId — keep it for future reference.',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to register your details: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _createServiceRequest({
+    required String consumerId,
+    required String consumerName,
+    String? successMessage,
+  }) async {
     setState(() => _isSubmitting = true);
 
     try {
       await ApiService.createRequest({
-        'consumerId': 'C001',
-        'consumerName': 'Amit Sharma',
-        'mobile': '9876543210',
+        'consumerId': consumerId,
+        'consumerName': consumerName,
+        'mobile': _mobileController.text.trim(),
         'category': widget.serviceName,
         'description':
             '${_issueTitleController.text.trim()}: ${_descriptionController.text.trim()}',
         'preferredDate': _preferredDate!.toIso8601String(),
-        'address': {
-          'buildingName': _addressLineController.text.trim(),
-          'city': _cityController.text.trim(),
-          'sector': _sectorController.text.trim(),
-          'landmark': _landmarkController.text.trim(),
-          'pincode': _pincodeController.text.trim(),
-        },
+        'address': _addressPayload(),
       });
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Request submitted for ${widget.serviceName}'),
+          content: Text(
+            successMessage ?? 'Request submitted for ${widget.serviceName}',
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -166,6 +283,18 @@ class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                if (_isGuest) ...[
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: _inputDecoration(
+                      'Full name',
+                      icon: Icons.person_outline,
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    validator: (value) => _requiredValidator(value, 'Name'),
+                  ),
+                  const SizedBox(height: 10),
+                ],
                 TextFormField(
                   controller: _issueTitleController,
                   decoration: _inputDecoration(
@@ -187,6 +316,24 @@ class _ServiceRequestFormScreenState extends State<ServiceRequestFormScreen> {
                   validator:
                       (value) =>
                           _requiredValidator(value, 'Problem description'),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _mobileController,
+                  keyboardType: TextInputType.phone,
+                  decoration: _inputDecoration(
+                    'Contact mobile number',
+                    icon: Icons.phone_outlined,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Mobile number is required';
+                    }
+                    if (value.trim().length < 10) {
+                      return 'Enter a valid mobile number';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 10),
                 InkWell(

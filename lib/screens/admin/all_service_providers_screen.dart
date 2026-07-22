@@ -320,30 +320,14 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
   String? _selectedCategory;
   double _selectedMinRating = 0;
 
-  static const List<String> _serviceTypes = [
-    'Electrician',
-    'Plumber',
-    'AC Service',
-    'Appliance Repair',
-    'Carpenter',
-    'Cleaning',
-    'Maintenance',
-    'Other',
-  ];
-
-  static const List<String> _businessTypes = [
-    'Individual',
-    'Shop',
-    'Workshop',
-    'Company',
-    'Franchise',
-    'Partnership',
-  ];
+  List<String> _serviceTypes = [];
+  List<String> _businessTypes = [];
 
   @override
   void initState() {
     super.initState();
     _loadProviders();
+    _loadMetadata();
   }
 
   Future<void> _loadProviders() async {
@@ -371,6 +355,23 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
         _errorMessage = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadMetadata() async {
+    try {
+      final metadata = await ApiService.getMetadata();
+      if (!mounted) return;
+      setState(() {
+        _serviceTypes = List<String>.from(
+          metadata['serviceCategories'] as List? ?? [],
+        );
+        _businessTypes = List<String>.from(
+          metadata['businessTypes'] as List? ?? [],
+        );
+      });
+    } catch (_) {
+      // Filters and the add-provider form will just show no options.
     }
   }
 
@@ -421,6 +422,16 @@ class _AllServiceProvidersScreenState extends State<AllServiceProvidersScreen> {
   }
 
   Future<void> _openAddProviderForm() async {
+    if (_serviceTypes.isEmpty || _businessTypes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Still loading form options, please try again'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final AddProviderSheetResult? result =
         await showModalBottomSheet<AddProviderSheetResult>(
           context: context,
