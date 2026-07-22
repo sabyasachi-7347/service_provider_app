@@ -94,15 +94,17 @@ class AdminDashboard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  action.subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 1.3,
-                    color: Color(0xFF6B7280),
+                Expanded(
+                  child: Text(
+                    action.subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.3,
+                      color: Color(0xFF6B7280),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -208,7 +210,7 @@ class AdminDashboard extends StatelessWidget {
                         crossAxisCount: crossAxisCount,
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
-                        childAspectRatio: isWide ? 1.35 : (canUseTwoColumns ? 1.2 : 1.45),
+                        mainAxisExtent: 160,
                       ),
                       itemBuilder: (context, index) => _buildTile(_actions[index], context),
                     ),
