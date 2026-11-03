@@ -21,6 +21,12 @@ export class LoginDto {
   password?: string;
 }
 
+export class FirebaseLoginDto {
+  @IsString()
+  @IsNotEmpty()
+  idToken!: string;
+}
+
 export class AddressDto {
   @IsString()
   @IsOptional()

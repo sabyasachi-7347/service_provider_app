@@ -13,6 +13,7 @@ import {
   CreateFeedbackDto,
   CreateProviderDto,
   CreateRequestDto,
+  FirebaseLoginDto,
   LoginDto,
   UpdateConsumerDto,
   UpdateRequestStatusDto,
@@ -30,6 +31,11 @@ export class AppController {
   @Post('auth/login')
   login(@Body() body: LoginDto) {
     return this.appService.login(body);
+  }
+
+  @Post('auth/firebase-login')
+  firebaseLogin(@Body() body: FirebaseLoginDto) {
+    return this.appService.firebaseLogin(body.idToken);
   }
 
   @Get('metadata')

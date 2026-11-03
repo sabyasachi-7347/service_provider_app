@@ -1,8 +1,10 @@
 // screens/login_screen.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'forgot_password_screen.dart';
 import '../widgets/otp_dialog.dart';
 import '../services/api_service.dart';
+import '../services/firebase_auth_service.dart';
 import '../models/user_model.dart';
 import 'dashboard/admin_dashboard.dart';
 import 'dashboard/service_provider_dashboard.dart'; // Placeholder for demo
@@ -18,6 +20,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController userIdController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final FirebaseAuthService _firebaseAuthService = FirebaseAuthService();
   bool useOtp = false;
   bool _isLoading = false;
 
@@ -28,47 +31,82 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _navigateForRole(AppUser user) {
+    if (!mounted) return;
+    if (user.role == 'admin') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AdminDashboard()),
+      );
+    } else if (user.role == 'service_provider') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ServiceProviderDashboard(user: user),
+        ),
+      );
+    } else if (user.role == 'consumer') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => ConsumerDashboard(user: user)),
+      );
+    } else {
+      throw Exception('Unknown user role');
+    }
+  }
+
+  void _showLoginError(String message) {
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // Signs in with Firebase Auth (email/password), then asks the backend
+  // which app profile/role that Firebase account is linked to.
   Future<void> _handleLogin() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final credential = await _firebaseAuthService.signInWithEmailAndPassword(
+        userIdController.text.trim(),
+        passwordController.text,
+      );
+      final idToken = await credential?.user?.getIdToken();
+      if (idToken == null) {
+        throw Exception('Could not obtain a Firebase session');
+      }
+
+      final response = await ApiService.firebaseLogin(idToken: idToken);
+      final user = AppUser.fromJson(response['user'] as Map<String, dynamic>);
+
+      _navigateForRole(user);
+    } on FirebaseAuthException catch (e) {
+      _showLoginError(e.message ?? 'Firebase sign-in failed');
+    } catch (e) {
+      _showLoginError('Login failed: ${e.toString()}');
+    }
+  }
+
+  // OTP login still goes through the demo userId lookup on the backend;
+  // it isn't wired to Firebase phone auth yet.
+  Future<void> _handleOtpLogin() async {
     setState(() => _isLoading = true);
 
     try {
       final response = await ApiService.login(
         userId: userIdController.text.trim(),
-        password: passwordController.text,
       );
       final user = AppUser.fromJson(response['user'] as Map<String, dynamic>);
 
-      if (!mounted) return;
-      if (user.role == 'admin') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const AdminDashboard()),
-        );
-      } else if (user.role == 'service_provider') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ServiceProviderDashboard(user: user),
-          ),
-        );
-      } else if (user.role == 'consumer') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => ConsumerDashboard(user: user)),
-        );
-      } else {
-        throw Exception('Unknown user role');
-      }
+      _navigateForRole(user);
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Login failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showLoginError('Login failed: ${e.toString()}');
     }
   }
 
@@ -90,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
           (_) => OtpDialog(
             mobile: mobile,
             onVerified: () {
-              _handleLogin();
+              _handleOtpLogin();
             },
           ),
     );
@@ -163,7 +201,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextField(
                           controller: userIdController,
                           decoration: InputDecoration(
-                            labelText: 'User ID / Mobile Number',
+                            labelText:
+                                useOtp
+                                    ? 'User ID / Mobile Number'
+                                    : 'Email',
                             prefixIcon: const Icon(Icons.person_outline),
                             filled: true,
                             fillColor: const Color(0xFFF9FAFB),

@@ -125,6 +125,7 @@ interface AuthUser {
   userId: string;
   name: string;
   role: Role;
+  email: string;
 }
 
 @Injectable()
@@ -154,9 +155,27 @@ export class AppService {
   ];
 
   private readonly users: AuthUser[] = [
-    // { id: 'A001', userId: 'admin', name: 'Admin', role: 'admin' },
-    // { id: 'SP001', userId: 'sp', name: 'Raj Electrician', role: 'service_provider' },
-    // { id: 'C001', userId: 'con', name: 'Amit Sharma', role: 'consumer' },
+    {
+      id: 'A001',
+      userId: 'admin',
+      name: 'Admin',
+      role: 'admin',
+      email: 'admin@serviceproviderapp01.test',
+    },
+    {
+      id: 'SP001',
+      userId: 'sp',
+      name: 'Raj Electrician',
+      role: 'service_provider',
+      email: 'provider@serviceproviderapp01.test',
+    },
+    {
+      id: 'C001',
+      userId: 'con',
+      name: 'Amit Sharma',
+      role: 'consumer',
+      email: 'consumer@serviceproviderapp01.test',
+    },
   ];
 
   private consumers: Consumer[] = [
@@ -337,6 +356,35 @@ export class AppService {
 
     return {
       token: `demo-token-${user.id}`,
+      user,
+    };
+  }
+
+  async firebaseLogin(idToken: string) {
+    let decoded;
+    try {
+      decoded = await this.firebaseService.auth.verifyIdToken(idToken);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired Firebase token');
+    }
+
+    if (!decoded.email) {
+      throw new UnauthorizedException('Firebase account has no email');
+    }
+
+    const users = await this.getCollection<AuthUser>('users');
+    const user = users.find(
+      (item) => item.email.toLowerCase() === decoded.email!.toLowerCase(),
+    );
+
+    if (!user) {
+      throw new UnauthorizedException(
+        'No app profile is linked to this Firebase account',
+      );
+    }
+
+    return {
+      token: idToken,
       user,
     };
   }

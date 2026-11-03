@@ -6,11 +6,13 @@ import {
   getApps,
   initializeApp,
 } from 'firebase-admin/app';
+import { Auth, getAuth } from 'firebase-admin/auth';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
 
 @Injectable()
 export class FirebaseService {
   readonly db: Firestore;
+  readonly auth: Auth;
 
   constructor() {
     if (getApps().length === 0) {
@@ -18,6 +20,7 @@ export class FirebaseService {
     }
 
     this.db = getFirestore();
+    this.auth = getAuth();
   }
 
   private getFirebaseOptions() {
