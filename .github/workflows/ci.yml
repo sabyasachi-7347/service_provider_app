@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (NestJS)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run build
+
+      # No test files exist yet; --passWithNoTests keeps this green until some are added.
+      - run: npm test -- --passWithNoTests
+
+  frontend:
+    name: Frontend (Flutter)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: flutter pub get
+
+      # Repo has pre-existing lint findings (deprecated API usage, avoid_print, etc.)
+      # unrelated to any given change; keep this informational until that debt is paid down.
+      - run: flutter analyze
+        continue-on-error: true
+
+      - run: flutter test

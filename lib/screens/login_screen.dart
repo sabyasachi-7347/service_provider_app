@@ -20,7 +20,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController userIdController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final FirebaseAuthService _firebaseAuthService = FirebaseAuthService();
+  FirebaseAuthService? _firebaseAuthService;
   bool useOtp = false;
   bool _isLoading = false;
 
@@ -73,7 +73,9 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final credential = await _firebaseAuthService.signInWithEmailAndPassword(
+      final firebaseAuthService =
+          _firebaseAuthService ??= FirebaseAuthService();
+      final credential = await firebaseAuthService.signInWithEmailAndPassword(
         userIdController.text.trim(),
         passwordController.text,
       );
@@ -231,27 +233,25 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         const SizedBox(height: 6),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF3F4F6),
+                        SwitchListTile(
+                          title: const Text(
+                            'Login with OTP',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          value: useOtp,
+                          activeColor: accentColor,
+                          tileColor: const Color(0xFFF3F4F6),
+                          shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: SwitchListTile(
-                            title: const Text(
-                              'Login with OTP',
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                            value: useOtp,
-                            activeColor: accentColor,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                            ),
-                            onChanged: (value) {
-                              setState(() {
-                                useOtp = value;
-                              });
-                            },
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
                           ),
+                          onChanged: (value) {
+                            setState(() {
+                              useOtp = value;
+                            });
+                          },
                         ),
                         const SizedBox(height: 20),
                         SizedBox(
