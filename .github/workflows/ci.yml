@@ -24,6 +24,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npm run lint:check
+
       - run: npm run build
 
       # No test files exist yet; --passWithNoTests keeps this green until some are added.

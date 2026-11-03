@@ -8,6 +8,7 @@
     "start:dev": "nest start --watch",
     "build": "nest build",
     "lint": "eslint \"src/**/*.ts\" --fix",
+    "lint:check": "eslint \"src/**/*.ts\"",
     "test": "jest"
   },
   "dependencies": {
@@ -22,6 +23,7 @@
     "rxjs": "latest"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@nestjs/cli": "latest",
     "@nestjs/schematics": "latest",
     "@nestjs/testing": "latest",
@@ -31,6 +33,7 @@
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
     "eslint": "latest",
+    "globals": "^17.14.0",
     "jest": "latest",
     "prettier": "latest",
     "source-map-support": "latest",
