@@ -71,6 +71,13 @@ class ApiService {
     return data as Map<String, dynamic>;
   }
 
+  static Future<Map<String, dynamic>> firebaseLogin({
+    required String idToken,
+  }) async {
+    final data = await _post('auth/firebase-login', {'idToken': idToken});
+    return data as Map<String, dynamic>;
+  }
+
   static Future<Map<String, dynamic>> getMetadata() async {
     final data = await _get('metadata');
     return data as Map<String, dynamic>;

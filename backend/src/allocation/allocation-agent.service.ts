@@ -137,7 +137,7 @@ export class AllocationAgentService {
     let skipped = 0;
 
     const providers = await this.appService.getAllServiceProviders();
-    let requests = await this.appService.getAllRequests();
+    const requests = await this.appService.getAllRequests();
     const workload = this.buildWorkloadMap(requests);
 
     for (const request of openRequests) {
@@ -184,7 +184,6 @@ export class AllocationAgentService {
           },
         );
         workload.set(decision.providerId, (workload.get(decision.providerId) ?? 0) + 1);
-        requests = await this.appService.getAllRequests();
       }
 
       assigned += 1;
