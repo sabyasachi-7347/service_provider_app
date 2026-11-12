@@ -8,6 +8,8 @@ jobs:
   build-android:
     name: Build Android debug APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -41,3 +43,16 @@ jobs:
           name: service-provider-app-debug-${{ github.sha }}
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
+
+      # actions/upload-artifact always wraps its output in a zip, even
+      # for a single file. Publish the raw .apk as a release asset too,
+      # so there's a direct-download link with no unzip step. Reuses
+      # the same tag each run, so this is always "the latest build".
+      - name: Publish APK to latest-debug-build release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-debug-build
+          name: Latest debug build
+          body: Automatically rebuilt from ${{ github.sha }} on every push to main. Not a versioned release.
+          prerelease: true
+          files: build/app/outputs/flutter-apk/app-debug.apk
