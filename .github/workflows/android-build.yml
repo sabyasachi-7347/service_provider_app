@@ -1,0 +1,29 @@
+name: Android Build
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-android:
+    name: Build Android debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: flutter pub get
+
+      # Debug build: uses Android's auto-generated debug keystore, no
+      # signing secrets needed. (Release builds currently need a real
+      # keystore wired up first — see android/app/build.gradle.kts.)
+      - run: flutter build apk --debug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: service-provider-app-debug-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 30
